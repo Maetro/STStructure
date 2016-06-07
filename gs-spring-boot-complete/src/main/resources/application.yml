@@ -1,0 +1,22 @@
+spring:
+ profiles: development
+name: develname
+env: develYML
+servers: 
+  - develserver1
+  - develserver2
+numbers:
+  - 1
+  - 6
+  
+---
+spring:
+ profiles: production
+name: prodname
+env: prodYML
+servers: 
+  - prodserver1
+  - prodserver2
+numbers:
+  - 1
+  - 6
