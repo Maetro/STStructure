@@ -15,11 +15,12 @@ public class HelloController {
 	
     @RequestMapping("/")
     public String index() {
+    	String probando = "probando";
     	String pantalla = "using env:" + configuracion.getEnv() + System.getProperty("line.separator")
     			.concat("name:" + configuracion.getName() + System.getProperty("line.separator"))
     			.concat("servers:" + configuracion.getServers() + System.getProperty("line.separator"))
     			.concat("numbers:" + configuracion.getNumbers() + System.getProperty("line.separator"))
-    			.concat("Greetings from Spring Boot!");
+    			.concat("Greetings from Spring Boot!").concat(probando);
         return pantalla;
     }
     
