@@ -7,12 +7,14 @@ import java.util.List;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+
 // TODO: Auto-generated Javadoc
 /**
  * The Class MatrixOfPositions.
  */
 public class MatrixOfPositions {
 
+	
 	/** The matriz. */
 	List<List<Integer>> matriz = new ArrayList<List<Integer>>();
 
@@ -45,16 +47,18 @@ public class MatrixOfPositions {
 	}
 	
 	/**
-	 * Inicializar matriz.
+	 * Inicializar matriz. La matriz debe ser cuadrada, por tanto si el plano 
+	 * contiene más ancho o más alto se tomara el maximo entre ellos.
+	 * La primera posicion de la matriz corresponde a la 0,0
 	 *
 	 * @param limits the limits
 	 */
-	public void inicializarMatriz(int limits){
+	public void inicializarMatriz(int limits, Integer minimumsquare){
 		ApplicationContext context = new ClassPathXmlApplicationContext("locale.xml");
-		
-//		k2tree.minimumsquare 
-//		Integer limite = MatrixOfPositions.round(limits, 4);
-		
+		Integer limite = MatrixOfPositions.round(limits, minimumsquare);
+		for (int i = 0; i<limite; i++) {
+			matriz.add(new ArrayList<Integer>(limite));
+		}
 	}
 	
 	private static int round(double num, int multipleOf) {
