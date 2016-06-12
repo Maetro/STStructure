@@ -9,6 +9,10 @@ numbers:
   - 1
   - 6
 minimumsquare: 4
+distanciaEntreSnapshots: 1
+limites: 4
+minimumSquare: 4
+
   
 ---
 spring:
@@ -22,3 +26,6 @@ numbers:
   - 1
   - 6
 minimumsquare: 4
+distanciaEntreSnapshots: 20
+limites: 4
+minimumSquare: 4

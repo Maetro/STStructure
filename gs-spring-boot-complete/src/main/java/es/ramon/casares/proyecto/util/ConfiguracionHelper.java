@@ -30,7 +30,13 @@ public class ConfiguracionHelper {
     
     /** The minimum square. */
     private Integer minimumSquare;
-
+    
+    /** The limites. */
+    private Integer limites;
+    
+    /** The distancia entre snapshots. */
+    private Integer distanciaEntreSnapshots;
+    
     /**
      * Gets the numbers.
      *
@@ -109,8 +115,7 @@ public class ConfiguracionHelper {
 	 * @return the minimum square
 	 */
 	public Integer getMinimumSquare() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.minimumSquare;
 	}
 	
 	/**
@@ -121,5 +126,43 @@ public class ConfiguracionHelper {
 	public void setMinimumSquare(Integer minimumSquare) {
 		this.minimumSquare = minimumSquare;
 	}
+
+	/**
+	 * Gets the distancia entre snapshots.
+	 *
+	 * @return the distancia entre snapshots
+	 */
+	public Integer getDistanciaEntreSnapshots() {
+		return distanciaEntreSnapshots;
+	}
+	
+	/**
+	 * Sets the distancia entre snapshots.
+	 *
+	 * @param distanciaEntreSnapshots the new distancia entre snapshots
+	 */
+	public void setDistanciaEntreSnapshots(Integer distanciaEntreSnapshots) {
+		this.distanciaEntreSnapshots = distanciaEntreSnapshots;
+	}
+	
+	/**
+	 * Gets the limites.
+	 *
+	 * @return the limites
+	 */
+	public Integer getLimites() {
+		return limites;
+	}
+	
+	/**
+	 * Sets the limites.
+	 *
+	 * @param limites the new limites
+	 */
+	public void setLimites(Integer limites) {
+		this.limites = limites;
+	}
+	
+	
 
 }
