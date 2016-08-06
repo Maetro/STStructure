@@ -8,7 +8,13 @@ numbers:
   - 6
 minimumsquare: 4
 distanciaEntreSnapshots: 1
-limites: 8
+segundosEntreInstantes: 30
+metrosPorCelda: 30
+
+#En metros segundo
+velocidadMaxima: 33.33 
+
+limites: 16000
 minimumSquare: 4
 
 ---
@@ -25,7 +31,13 @@ numbers:
   - 6
 minimumsquare: 4
 distanciaEntreSnapshots: 1
-limites: 4
+segundosEntreInstantes: 30
+metrosPorCelda: 30
+
+#En metros segundo
+velocidadMaxima: 33.33 
+
+limites: 10000
 minimumSquare: 4
 
   
@@ -42,5 +54,11 @@ numbers:
   - 6
 minimumsquare: 4
 distanciaEntreSnapshots: 20
-limites: 4
+segundosEntreInstantes: 30
+metrosPorCelda: 30
+
+#En metros segundo
+velocidadMaxima: 33.33 
+
+limites: 10000
 minimumSquare: 4

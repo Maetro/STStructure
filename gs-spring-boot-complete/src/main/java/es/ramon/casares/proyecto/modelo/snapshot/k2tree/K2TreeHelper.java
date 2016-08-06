@@ -6,7 +6,9 @@
  */
 package es.ramon.casares.proyecto.modelo.snapshot.k2tree;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -18,6 +20,7 @@ import es.ramon.casares.proyecto.modelo.matrix.InformacionInstanteObjeto;
 import es.ramon.casares.proyecto.modelo.matrix.MatrixOfPositions;
 import es.ramon.casares.proyecto.modelo.matrix.Posicion;
 import es.ramon.casares.proyecto.modelo.matrix.RegionAnalizarBean;
+import no.uib.cipr.matrix.MatrixEntry;
 
 /**
  * The Class K2TreeHelper.
@@ -37,9 +40,9 @@ public class K2TreeHelper {
         final K2Tree snapshot = new K2Tree();
         T = new ArrayList<Integer>();
         L = new ArrayList<Integer>();
-        final ArrayList<Integer> idsObjetos = new ArrayList<Integer>();
-        final MatrixOfPositions matrizPosiciones = new MatrixOfPositions();
-        final Integer numeroCeldas = matrizPosiciones.inicializarMatriz(limites, minimumSquare);
+        final ArrayList<Short> idsObjetos = new ArrayList<Short>();
+        final MatrixOfPositions matrizPosiciones = new MatrixOfPositions(limites, minimumSquare);
+        final Integer numeroCeldas = matrizPosiciones.getNumCeldas();
         for (final InformacionInstanteObjeto informacionInstanteObjeto : listaInfo) {
             matrizPosiciones.anadirObjetoAPosicion(informacionInstanteObjeto);
         }
@@ -56,8 +59,7 @@ public class K2TreeHelper {
         final List<Byte> tBits = comprimir(T);
         final List<Byte> lBits = comprimir(L);
 
-        final Permutation permutacion = generarPermutacion(idsObjetos);
-        snapshot.setPermutacion(permutacion);
+        snapshot.setIdsObjetos(idsObjetos);
         snapshot.setT(tBits);
         snapshot.setL(lBits);
         return snapshot;
@@ -229,7 +231,7 @@ public class K2TreeHelper {
 
     private static void analizarRegion(final MatrixOfPositions matriz, final Integer puntoXinferior,
             final Integer puntoYinferior, final Integer puntoXsuperior, final Integer puntoYsuperior,
-            final Integer nivel, final ArrayList<Integer> idsObjetos) {
+            final Integer nivel, final ArrayList<Short> idsObjetos) {
 
         Integer datos = 0;
         if ((puntoXsuperior - puntoXinferior) <= 1) {
@@ -250,33 +252,37 @@ public class K2TreeHelper {
     private static Integer analisisCuadradoFinal(final MatrixOfPositions matriz, final Integer puntoXinferior,
             final Integer puntoYinferior,
             final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos,
-            final ArrayList<Integer> idsObjetos) {
+            final ArrayList<Short> idsObjetos) {
+
+        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
+
         // Esquina SuperiorIzquierda
-        final List<Integer> resultados = new ArrayList<Integer>();
-        final List<Integer> filaSuperior = matriz.getMatriz().get(puntoYsuperior);
-        final List<Integer> filaInferior = matriz.getMatriz().get(puntoYinferior);
-        if (filaSuperior.get(puntoXinferior) != 0) {
-            resultados.add(filaSuperior.get(puntoXinferior));
+        Double valor = matriz.getMatriz().get(puntoYsuperior, puntoXinferior);
+        if (valor != 0d) {
             datos += 8;
-            idsObjetos.add(filaSuperior.get(puntoXinferior));
+            idsObjetos.add(valor.shortValue());
         }
+
         // Esquina SuperiorDerecha
-        if (filaSuperior.get(puntoXsuperior) != 0) {
-            resultados.add(filaSuperior.get(puntoXsuperior));
+        valor = matriz.getMatriz().get(puntoYsuperior, puntoXsuperior);
+        if (valor != 0d) {
             datos += 4;
-            idsObjetos.add(filaSuperior.get(puntoXsuperior));
+            idsObjetos.add(valor.shortValue());
         }
         // Esquina InferiorIzquierda
-        if (filaInferior.get(puntoXinferior) != 0) {
-            resultados.add(filaInferior.get(puntoXinferior));
+        valor = matriz.getMatriz().get(puntoYinferior, puntoXinferior);
+        if (valor != 0d) {
+
             datos += 2;
-            idsObjetos.add(filaInferior.get(puntoXinferior));
+            idsObjetos.add(valor.shortValue());
         }
         // Esquina InferiorDerecha
-        if (filaInferior.get(puntoXsuperior) != 0) {
-            resultados.add(filaInferior.get(puntoXsuperior));
+        valor = matriz.getMatriz().get(puntoYinferior, puntoXsuperior);
+        if (valor != 0d) {
+
             datos += 1;
-            idsObjetos.add(filaInferior.get(puntoXsuperior));
+            idsObjetos.add(valor.shortValue());
         }
         return datos;
     }
@@ -307,29 +313,45 @@ public class K2TreeHelper {
             final Integer puntoYinferior,
             final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos, final Integer puntoMedioY,
             final Integer puntoMedioX, final Integer nivel) {
+
+        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
         // Esquina SuperiorIzquierda
+
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoMedioY + 1, puntoMedioX, puntoYsuperior)) {
             datos += 8;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoMedioY + 1, puntoMedioX,
                     puntoYsuperior, nivel));
+            System.out.print("[*,");
+        } else {
+            System.out.print("[ ,");
         }
         // Esquina SuperiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior, puntoYsuperior)) {
             datos += 4;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior,
                     puntoYsuperior, nivel));
+            System.out.println("*]");
+        } else {
+            System.out.println(" ]");
         }
         // Esquina InferiorIzquierda
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoYinferior, puntoMedioX, puntoMedioY)) {
             datos += 2;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoYinferior, puntoMedioX,
                     puntoMedioY, nivel));
+            System.out.print("[*,");
+        } else {
+            System.out.print("[ ,");
         }
         // Esquina InferiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoYinferior, puntoXsuperior, puntoMedioY)) {
             datos += 1;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoYinferior, puntoXsuperior,
                     puntoMedioY, nivel));
+            System.out.println("*]");
+        } else {
+            System.out.println(" ]");
         }
         return datos;
     }
@@ -351,11 +373,14 @@ public class K2TreeHelper {
      */
     public static boolean hayValoresEnRegion(final MatrixOfPositions matriz, final Integer puntoXinferior,
             final Integer puntoYinferior, final Integer puntoXsuperior, final Integer puntoYsuperior) {
-        for (int i = puntoYinferior; i <= puntoYsuperior; i++) {
-            final List<Integer> fila = matriz.getMatriz().get(i);
-            for (int j = puntoXinferior; j <= puntoXsuperior; j++) {
-                if (fila.get(j) != 0) {
-                    return true;
+        final Iterator<MatrixEntry> iterador = matriz.getMatriz().iterator();
+        while (iterador.hasNext()) {
+            final MatrixEntry sig = iterador.next();
+            if ((sig.row() >= puntoYinferior) && (sig.row() <= puntoYsuperior)) {
+                if ((sig.column() >= puntoXinferior) && (sig.column() <= puntoXsuperior)) {
+                    if (sig.get() != 0d) {
+                        return true;
+                    }
                 }
             }
         }
@@ -371,9 +396,10 @@ public class K2TreeHelper {
      */
     public static int obtenerTamanoK2Tree(final K2Tree snapshot) {
         int numbytes = 0;
+        numbytes += 12; // Tamano cabeceras (3 enteros)
         numbytes += snapshot.getL().size();
         numbytes += snapshot.getT().size();
-        numbytes += snapshot.getPermutacion().getNumberOfBytes();
+        numbytes += snapshot.getIdsObjetos().size() * 2;
         return numbytes;
     }
 
@@ -393,32 +419,41 @@ public class K2TreeHelper {
     public static byte[] serializarK2Tree(final K2Tree k2Tree) {
 
         final List<Byte> resultado = new ArrayList<Byte>();
-        final Integer bytesL = k2Tree.getL().size();
         final Integer bytesT = k2Tree.getT().size();
-        final Integer bytesPerm = k2Tree.getPermutacion().getPerm().size();
-        final Integer bytesRevLinks = k2Tree.getPermutacion().getRev_links().size();
-        resultado.add(bytesT.byteValue());
-        resultado.add(bytesL.byteValue());
-        resultado.add(bytesPerm.byteValue());
-        resultado.add(bytesRevLinks.byteValue());
+        final Integer bytesL = k2Tree.getL().size();
+        final Integer bytesPerm = k2Tree.getIdsObjetos().size();
+
+        anadirEnteroAListaBytes(resultado, bytesT);
+        anadirEnteroAListaBytes(resultado, bytesL);
+        anadirEnteroAListaBytes(resultado, bytesPerm);
+
         for (final Byte t : k2Tree.getT()) {
             resultado.add(t);
         }
         for (final Byte l : k2Tree.getL()) {
             resultado.add(l);
         }
-        for (final Integer perm : k2Tree.getPermutacion().getPerm()) {
-            resultado.add(perm.byteValue());
+        for (final Short perm : k2Tree.getIdsObjetos()) {
+            anadirShortAListaBytes(resultado, perm);
         }
-        for (final Integer rev : k2Tree.getPermutacion().getRev_links()) {
-            resultado.add(rev.byteValue());
-        }
-        for (final Byte sampled : k2Tree.getPermutacion().getSampled()) {
-            resultado.add(sampled);
-        }
+
         final Byte[] bytes = resultado.toArray(new Byte[resultado.size()]);
         return ArrayUtils.toPrimitive(bytes);
 
+    }
+
+    private static void anadirEnteroAListaBytes(final List<Byte> resultado, final Integer num) {
+        final byte[] bytes = ByteBuffer.allocate(4).putInt(num).array();
+        for (final byte b : bytes) {
+            resultado.add(new Byte(b));
+        }
+    }
+
+    private static void anadirShortAListaBytes(final List<Byte> resultado, final Short num) {
+        final byte[] bytes = ByteBuffer.allocate(2).putShort(num).array();
+        for (final byte b : bytes) {
+            resultado.add(new Byte(b));
+        }
     }
 
 }

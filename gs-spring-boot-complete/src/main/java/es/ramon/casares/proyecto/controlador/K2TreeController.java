@@ -29,7 +29,7 @@ public class K2TreeController {
 
     @RequestMapping("/crearK2Tree")
     public String index() throws ClassNotFoundException {
-        final Resource resource = this.resourceLoader.getResource("classpath:datosPlanos.txt");
+        final Resource resource = this.resourceLoader.getResource("classpath:datosPlanos2.txt");
 
         // Inicializamos el lector del fichero
         InputStream is;
@@ -55,8 +55,8 @@ public class K2TreeController {
                         final K2Tree k2Tree = K2TreeHelper.generarK2Tree(listaInfo, limites, minimumSquare);
                         final byte[] bytes = K2TreeHelper.serializarK2Tree(k2Tree);
                         final int tamanoBytes = K2TreeHelper.obtenerTamanoK2Tree(k2Tree);
-                        System.out.println("NumBytes: " + tamanoBytes);
-
+                        System.out.println("NumBytes : " + tamanoBytes);
+                        System.out.println("Real     : " + bytes.length);
                         k2Tree.equals(k2Tree);
                     }
                 }

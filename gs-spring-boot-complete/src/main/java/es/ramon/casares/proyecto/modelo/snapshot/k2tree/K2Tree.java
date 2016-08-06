@@ -24,8 +24,8 @@ public class K2Tree implements Serializable {
     /** The l. */
     private List<Byte> l;
 
-    /** The permutacion. */
-    private Permutation permutacion;
+    /** The ids objetos. */
+    private List<Short> idsObjetos;
 
     public K2Tree() {
     }
@@ -39,7 +39,7 @@ public class K2Tree implements Serializable {
     public K2Tree(final K2Tree k2Tree) {
         this.t = k2Tree.getT();
         this.l = k2Tree.getL();
-        this.permutacion = k2Tree.getPermutacion();
+        this.idsObjetos = k2Tree.getIdsObjetos();
 
     }
 
@@ -50,14 +50,14 @@ public class K2Tree implements Serializable {
      *            the t
      * @param l
      *            the l
-     * @param permutacion
-     *            the permutacion
+     * @param idsObjetos
+     *            ids objetos
      */
-    public K2Tree(final List<Byte> t, final List<Byte> l, final Permutation permutacion) {
+    public K2Tree(final List<Byte> t, final List<Byte> l, final List<Short> idsObjetos) {
         super();
         this.t = t;
         this.l = l;
-        this.permutacion = permutacion;
+        this.idsObjetos = idsObjetos;
     }
 
     /**
@@ -99,22 +99,22 @@ public class K2Tree implements Serializable {
     }
 
     /**
-     * Gets the permutacion.
+     * Obtiene ids objetos.
      * 
-     * @return the permutacion
+     * @return ids objetos
      */
-    public Permutation getPermutacion() {
-        return this.permutacion;
+    public List<Short> getIdsObjetos() {
+        return this.idsObjetos;
     }
 
     /**
-     * Sets the permutacion.
+     * Establece ids objetos.
      * 
-     * @param permutacion
-     *            the new permutacion
+     * @param idsObjetos
+     *            nuevo ids objetos
      */
-    public void setPermutacion(final Permutation permutacion) {
-        this.permutacion = permutacion;
+    public void setIdsObjetos(final List<Short> idsObjetos) {
+        this.idsObjetos = idsObjetos;
     }
 
 }
