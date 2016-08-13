@@ -13,7 +13,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class ConfiguracionHelper.
  * 
@@ -53,6 +52,9 @@ public class ConfiguracionHelper {
 
     /** En metros segundo */
     private Double velocidadMaxima;
+
+    /** The instantes hasta desaparicion. */
+    private int instantesHastaDesaparicion;
 
     /**
      * Gets the numbers.
@@ -242,5 +244,24 @@ public class ConfiguracionHelper {
      */
     public void setVelocidadMaxima(final Double velocidadMaxima) {
         this.velocidadMaxima = velocidadMaxima;
+    }
+
+    /**
+     * Obtiene instantes hasta desaparicion.
+     * 
+     * @return instantes hasta desaparicion
+     */
+    public int getInstantesHastaDesaparicion() {
+        return this.instantesHastaDesaparicion;
+    }
+
+    /**
+     * Establece instantes hasta desaparicion.
+     * 
+     * @param instantesHastaDesaparicion
+     *            nuevo instantes hasta desaparicion
+     */
+    public void setInstantesHastaDesaparicion(final int instantesHastaDesaparicion) {
+        this.instantesHastaDesaparicion = instantesHastaDesaparicion;
     }
 }
