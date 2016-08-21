@@ -13,7 +13,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import es.ramon.casares.proyecto.modelo.matrix.InformacionInstanteObjeto;
+import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
 import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
 import es.ramon.casares.proyecto.util.ConfiguracionHelper;
@@ -41,7 +41,7 @@ public class K2TreeController {
             final Integer limites = this.configuracion.getLimites();
             final Integer minimumSquare = this.configuracion.getMinimumSquare();
             String line;
-            final List<InformacionInstanteObjeto> listaInfo = new ArrayList<InformacionInstanteObjeto>();
+            final List<ObjetoMovil> listaInfo = new ArrayList<ObjetoMovil>();
             final List<K2Tree> snapshots = new ArrayList<K2Tree>();
             final Integer instanteAnterior = 0;
             while ((line = br.readLine()) != null) {
@@ -61,7 +61,7 @@ public class K2TreeController {
                     }
                 }
 
-                final InformacionInstanteObjeto info = crearInfoPosicionDesdeLinea(elementos);
+                final ObjetoMovil info = crearInfoPosicionDesdeLinea(elementos);
                 listaInfo.add(info);
             }
 
@@ -84,8 +84,8 @@ public class K2TreeController {
      *            the elementos
      * @return the informacion instante objeto
      */
-    private InformacionInstanteObjeto crearInfoPosicionDesdeLinea(final String[] elementos) {
-        final InformacionInstanteObjeto info = new InformacionInstanteObjeto();
+    private ObjetoMovil crearInfoPosicionDesdeLinea(final String[] elementos) {
+        final ObjetoMovil info = new ObjetoMovil();
         info.setInstante(Integer.valueOf(elementos[0]));
         info.setObjetoId(Integer.valueOf(elementos[1]));
         info.setPosicionX(Integer.valueOf(elementos[2]));

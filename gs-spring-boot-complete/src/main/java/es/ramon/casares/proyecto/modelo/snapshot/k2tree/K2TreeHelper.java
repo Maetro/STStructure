@@ -8,18 +8,22 @@ package es.ramon.casares.proyecto.modelo.snapshot.k2tree;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Stack;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.util.CollectionUtils;
 
-import es.ramon.casares.proyecto.modelo.matrix.InformacionInstanteObjeto;
 import es.ramon.casares.proyecto.modelo.matrix.MatrixOfPositions;
 import es.ramon.casares.proyecto.modelo.matrix.Posicion;
 import es.ramon.casares.proyecto.modelo.matrix.RegionAnalizarBean;
+import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
+import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
 import no.uib.cipr.matrix.MatrixEntry;
 
 /**
@@ -34,7 +38,7 @@ public class K2TreeHelper {
      *            the lista info
      * @return the k2 tree
      */
-    public static K2Tree generarK2Tree(final List<InformacionInstanteObjeto> listaInfo, final Integer limites,
+    public static K2Tree generarK2Tree(final List<ObjetoMovil> listaInfo, final Integer limites,
             final Integer minimumSquare) {
         regionesPendientesAnalizar = new LinkedList<RegionAnalizarBean>();
         final K2Tree snapshot = new K2Tree();
@@ -43,7 +47,7 @@ public class K2TreeHelper {
         final ArrayList<Short> idsObjetos = new ArrayList<Short>();
         final MatrixOfPositions matrizPosiciones = new MatrixOfPositions(limites, minimumSquare);
         final Integer numeroCeldas = matrizPosiciones.getNumCeldas();
-        for (final InformacionInstanteObjeto informacionInstanteObjeto : listaInfo) {
+        for (final ObjetoMovil informacionInstanteObjeto : listaInfo) {
             matrizPosiciones.anadirObjetoAPosicion(informacionInstanteObjeto);
         }
 
@@ -254,8 +258,8 @@ public class K2TreeHelper {
             final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos,
             final ArrayList<Short> idsObjetos) {
 
-        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
+//        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+//        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
 
         // Esquina SuperiorIzquierda
         Double valor = matriz.getMatriz().get(puntoYsuperior, puntoXinferior);
@@ -314,44 +318,44 @@ public class K2TreeHelper {
             final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos, final Integer puntoMedioY,
             final Integer puntoMedioX, final Integer nivel) {
 
-        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
+//        System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+//        System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
         // Esquina SuperiorIzquierda
 
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoMedioY + 1, puntoMedioX, puntoYsuperior)) {
             datos += 8;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoMedioY + 1, puntoMedioX,
                     puntoYsuperior, nivel));
-            System.out.print("[*,");
+//            System.out.print("[*,");
         } else {
-            System.out.print("[ ,");
+//            System.out.print("[ ,");
         }
         // Esquina SuperiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior, puntoYsuperior)) {
             datos += 4;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior,
                     puntoYsuperior, nivel));
-            System.out.println("*]");
+//            System.out.println("*]");
         } else {
-            System.out.println(" ]");
+//            System.out.println(" ]");
         }
         // Esquina InferiorIzquierda
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoYinferior, puntoMedioX, puntoMedioY)) {
             datos += 2;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoYinferior, puntoMedioX,
                     puntoMedioY, nivel));
-            System.out.print("[*,");
+//            System.out.print("[*,");
         } else {
-            System.out.print("[ ,");
+//            System.out.print("[ ,");
         }
         // Esquina InferiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoYinferior, puntoXsuperior, puntoMedioY)) {
             datos += 1;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoYinferior, puntoXsuperior,
                     puntoMedioY, nivel));
-            System.out.println("*]");
+//            System.out.println("*]");
         } else {
-            System.out.println(" ]");
+//            System.out.println(" ]");
         }
         return datos;
     }
@@ -456,4 +460,61 @@ public class K2TreeHelper {
         }
     }
 
+	public static K2Tree generarK2Tree(HashMap<PosicionKey, ObjetoMovil> posicionIds, Integer limite,
+			Integer minimumSquare) {
+		Collection<ObjetoMovil> listaInfoCollection = posicionIds.values();
+		List<ObjetoMovil> listaInfo = new ArrayList<ObjetoMovil>(listaInfoCollection);
+		return generarK2Tree(listaInfo, limite, minimumSquare);
+	}
+
+//	public static MatrixOfPositions obtenerMatriz(K2Tree k2Tree,int  limite, int minimoCuadrado) {
+//		MatrixOfPositions matriz = new MatrixOfPositions(limite, minimoCuadrado);
+//		k2Tree.get
+//		matriz.i
+//		return matriz;
+//	}
+//	
+//	public static encontrarCamino(K2Tree k2Tree){
+//		Stack path = new Stack<Integer>();
+//		p = 
+//	}
+
+//	Algorithm 2.1 (FindPath), Obtiene el camino desde la raíz a la hoja en el
+//	snapshot que contiene un objeto especificado como parámetro
+//	Entrada: Snapshot s, OID o.
+//	Salida: Stack.
+//
+//	1: path ← New(Stack)
+//	2: p ← s.permutacion.π−1
+//	3: x = Select(s.L, p) + LengthInBits(s.T)
+//	4: while x > 0 do
+//	5: i = I(x)
+//	6: path = Push(path, i)
+//	7: x = Padre(x)
+//	8: end while
+//	9: return path
+//
+//	(o)
+//
+//	Algorithm 2.2 (getObjectPos), encuentra en un snapshot la posición absoluta
+//	de un objeto pasado como parámetro
+//	Entrada: Snapshot s, OID o.
+//	Salida: Punto.
+//
+//	1: x1 = 0, y1 = 0
+//	2: x2 = s.N − 1, y2 = s.N − 1 . N, total de filas y columnas de s
+//	3: path ← FindPath(s, o)
+//	4: while Not Empty(path) do
+//	5: i = Pop(path)
+//	6: colum = i m ́od k
+//	7: row = bi ÷ kc
+//	8: pivx = (x2 − x1 + 1) ÷ k
+//	9: pivy = (y2 − y1 + 1) ÷ k . pivx = pivy
+//	10: x2 = pivx(colum + 1) + x1 − 1
+//	11: x1 = x2 − pivx + 1
+//	12: y2 = pivy · (row + 1) + y1 − 1
+//	13: y1 = y2 − pivy + 1
+//	14: end while
+//	15: return NewPoint(x1, y1)
+	
 }

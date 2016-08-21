@@ -1,65 +1,118 @@
 package es.ramon.casares.proyecto.modelo.objetos;
 
-public class ObjetoMovil {
+import java.io.Serializable;
 
-    private int id;
-    private int instant;
-    private int y;
-    private int x;
-    private boolean enMovimiento = false;
+// TODO: Auto-generated Javadoc
+/**
+ * The Class InformacionInstanteObjeto.
+ */
+public class ObjetoMovil implements Serializable{
 
-    public ObjetoMovil() {
+	
+	private static final long serialVersionUID = 7776211319563188088L; 
+	
+	/** The objeto id. */
+	private Integer objetoId;
+	
+	/** The instante. */
+	private Integer instante;
+	
+	/** The posicion x. */
+	private Integer posicionX;
+	
+	/** The posicion y. */
+	private Integer posicionY;
+	
+	/**
+	 * Instantiates a new informacion instante objeto.
+	 */
+	public ObjetoMovil() {
+	
+	}
 
-    }
+	
+	
+	public ObjetoMovil(Integer objetoId, Integer instante, Integer posicionX, Integer posicionY) {
+		super();
+		this.objetoId = objetoId;
+		this.instante = instante;
+		this.posicionX = posicionX;
+		this.posicionY = posicionY;
+	}
 
-    public ObjetoMovil(final int id, final int instant, final int x, final int y) {
-        this.id = id;
-        this.instant = instant;
-        this.y = y;
-        this.x = x;
-    }
 
-    public int getId() {
-        return this.id;
-    }
 
-    public void setId(
-            final int id) {
-        this.id = id;
-    }
+	/**
+	 * Gets the objeto id.
+	 *
+	 * @return the objeto id
+	 */
+	public Integer getObjetoId() {
+		return objetoId;
+	}
 
-    public int getX() {
-        return this.x;
-    }
+	/**
+	 * Sets the objeto id.
+	 *
+	 * @param objetoId the new objeto id
+	 */
+	public void setObjetoId(Integer objetoId) {
+		this.objetoId = objetoId;
+	}
 
-    public void setX(
-            final int x) {
-        this.x = x;
-    }
+	/**
+	 * Gets the instante.
+	 *
+	 * @return the instante
+	 */
+	public Integer getInstante() {
+		return instante;
+	}
 
-    public int getY() {
-        return this.y;
-    }
+	/**
+	 * Sets the instante.
+	 *
+	 * @param instante the new instante
+	 */
+	public void setInstante(Integer instante) {
+		this.instante = instante;
+	}
 
-    public void setY(
-            final int y) {
-        this.y = y;
-    }
+	/**
+	 * Gets the posicion x.
+	 *
+	 * @return the posicion x
+	 */
+	public Integer getPosicionX() {
+		return posicionX;
+	}
 
-    public int getInstant() {
-        return this.instant;
-    }
+	/**
+	 * Sets the posicion x.
+	 *
+	 * @param posicionX the new posicion x
+	 */
+	public void setPosicionX(Integer posicionX) {
+		this.posicionX = posicionX;
+	}
 
-    public void setInstant(
-            final int instant) {
-        this.instant = instant;
-    }
+	/**
+	 * Gets the posicion y.
+	 *
+	 * @return the posicion y
+	 */
+	public Integer getPosicionY() {
+		return posicionY;
+	}
 
-    public boolean isEnMovimiento() {
-        return this.enMovimiento;
-    }
-
-    public void setEnMovimiento(final boolean enMovimiento) {
-        this.enMovimiento = enMovimiento;
-    }
+	/**
+	 * Sets the posicion y.
+	 *
+	 * @param posicionY the new posicion y
+	 */
+	public void setPosicionY(Integer posicionY) {
+		this.posicionY = posicionY;
+	}
+	
+     	
 }

@@ -56,6 +56,10 @@ public class ConfiguracionHelper {
     /** The instantes hasta desaparicion. */
     private int instantesHastaDesaparicion;
 
+    private int S;
+    
+    private int C;
+    
     /**
      * Gets the numbers.
      * 
@@ -264,4 +268,22 @@ public class ConfiguracionHelper {
     public void setInstantesHastaDesaparicion(final int instantesHastaDesaparicion) {
         this.instantesHastaDesaparicion = instantesHastaDesaparicion;
     }
+    
+    public int getC() {
+		return C;
+	}
+    
+    public void setC(int c) {
+		C = c;
+	}
+    
+    public int getS() {
+		return S;
+	}
+    
+    public void setS(int s) {
+		S = s;
+	}
+    
+    
 }

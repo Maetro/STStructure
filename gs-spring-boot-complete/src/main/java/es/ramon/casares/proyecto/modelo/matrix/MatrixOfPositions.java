@@ -6,6 +6,7 @@
  */
 package es.ramon.casares.proyecto.modelo.matrix;
 
+import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 import no.uib.cipr.matrix.sparse.LinkedSparseMatrix;
 
 /**
@@ -106,9 +107,9 @@ public class MatrixOfPositions {
      * @param informacionInstanteObjeto
      *            the informacion instante objeto
      */
-    public void anadirObjetoAPosicion(final InformacionInstanteObjeto informacionInstanteObjeto) {
-        this.matriz.set(informacionInstanteObjeto.getPosicionY(),
-                informacionInstanteObjeto.getPosicionX(), informacionInstanteObjeto.getObjetoId().doubleValue());
+    public void anadirObjetoAPosicion(final ObjetoMovil informacionInstanteObjeto) {
+        this.matriz.set(informacionInstanteObjeto.getPosicionX(),
+                informacionInstanteObjeto.getPosicionY(), informacionInstanteObjeto.getObjetoId().doubleValue());
 
     }
 }

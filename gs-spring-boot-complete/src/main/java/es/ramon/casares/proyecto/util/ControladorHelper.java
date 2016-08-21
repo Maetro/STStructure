@@ -13,6 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import es.ramon.casares.proyecto.modelo.log.Movimiento;
+
 public class ControladorHelper {
 
     // calculate haversine distance for linear distance
@@ -86,6 +88,38 @@ public class ControladorHelper {
 
     }
 
+    public static Movimiento obtenerMovimiento(final int mov) {
+        final int temp = (int) Math.round(Math.sqrt(mov));
+        final int temp2 = (int) Math.pow(temp, 2);
+        if ((temp % 2) == 0) {
+            // Par
+            final int dividido = temp / 2;
+
+            if (temp2 > mov) {
+                // Lado Abajo
+                return new Movimiento(((-dividido) + (temp2 - mov)), - dividido);
+            } else {
+                // Lado Izquierdo
+                return new Movimiento(-dividido, ((-dividido) + (mov - temp2)));
+            
+            }
+        } else {
+            // Impar
+            final int dividido = (temp - 1) / 2;
+            final int x = dividido + 1;
+            final int y = dividido;
+            if (temp2 >= mov) {
+                // Lado arriba
+            	return new Movimiento((x - (temp2 - mov)), y);
+
+            } else {
+                // Lado derecha
+                return new Movimiento(x, (y - (mov - temp2)));
+            }
+        }
+
+    }
+    
     /**
      * Sort by value.
      * 
@@ -105,7 +139,7 @@ public class ControladorHelper {
         {
             public int compare(final Map.Entry<K, V> o1, final Map.Entry<K, V> o2)
             {
-                return (o1.getValue()).compareTo(o2.getValue());
+                return (o2.getValue()).compareTo(o1.getValue());
             }
         });
 

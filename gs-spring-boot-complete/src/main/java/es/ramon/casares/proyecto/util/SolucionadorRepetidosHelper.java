@@ -17,6 +17,8 @@ import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 
+
+
 /**
  * The Class SolucionadorRepetidosHelper.
  * 
@@ -66,8 +68,8 @@ public class SolucionadorRepetidosHelper {
 
                 if (instant != lastInstant) {
                     for (final ObjetoMovil objeto : this.mapaIds.values()) {
-                        writer.write(objeto.getInstant() + " " + objeto.getId() + " " + objeto.getX() +
-                                " " + objeto.getY() + "\n");
+                        writer.write(objeto.getInstante() + " " + objeto.getObjetoId() + " " + objeto.getPosicionX() +
+                                " " + objeto.getPosicionY() + "\n");
                     }
                     lastInstant = instant;
                     this.mapaIds.clear();

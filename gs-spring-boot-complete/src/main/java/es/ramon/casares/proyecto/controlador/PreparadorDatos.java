@@ -40,6 +40,7 @@ import es.ramon.casares.proyecto.util.ConfiguracionHelper;
 import es.ramon.casares.proyecto.util.ControladorHelper;
 import es.ramon.casares.proyecto.util.CreadorFicheroFrecuencias;
 import es.ramon.casares.proyecto.util.Normalizador;
+import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper;
 import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
 import es.ramon.casares.proyecto.util.parser.LineaEntradaParseada;
 import es.ramon.casares.proyecto.util.parser.ParseadorFicherosEntrada;
@@ -68,7 +69,6 @@ public class PreparadorDatos {
     private static RandomAccessFile datareader;
     private static BufferedWriter mainWriter;
     private static BufferedWriter statiticswriter;
-    private static ArrayList<Integer> objetosProblematicos = new ArrayList<Integer>();
 
     private final HashMap<Integer, ObjectDataConGaps> mapaIds = new HashMap<Integer, ObjectDataConGaps>();
     private final HashMap<Integer, ObjectInformation> mapInformationIds = new HashMap<Integer, ObjectInformation>();
@@ -620,8 +620,8 @@ public class PreparadorDatos {
             // ultimoInstante);
             // System.out.println("Inicializar posiciones");
             // inicializarPosiciones();
-            // this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
-            // * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
+             this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
+             * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
             // System.out.println("Velocidad máxima (cuadrados/instante):       " + this.limiteSuperior);
             // br.close();
             // is.close();
@@ -639,25 +639,31 @@ public class PreparadorDatos {
             //
             // final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
             // System.out.println("Solucionar colisiones");
-            // int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
-            //
-            // System.out.println("Numero colisiones:  " + numColisiones);
+//             int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
+            
+//             System.out.println("Numero colisiones:  " + numColisiones);
 
             final Resource ficheroSinColisiones =
                     this.resourceLoader.getResource("classpath:datafileSinColisiones");
 
-            // final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
-            // System.out.println("Revisar colisiones");
-            // numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
-            //
-            // System.out.println("Numero colisiones final :  " + numColisiones);
+//             final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
+//             System.out.println("Revisar colisiones");
+//             numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
+//            
+//             System.out.println("Numero colisiones final :  " + numColisiones);
 
             final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteSuperior);
             frecuenciasCreador.inicializar();
             frecuenciasCreador.crearFicheroFrecuencias(this.configuracion, ficheroSinColisiones);
-
+//            CreadorEstructura creador = new CreadorEstructura(this.limiteSuperior, null , null);
+//            
+//            final Resource ficheroFrecuencias =
+//                    this.resourceLoader.getResource("classpath:frecuencias");
+//            
+//            creador.inicializar(ficheroFrecuencias,configuracion);
+//            creador.crearEstructura(ficheroSinColisiones, configuracion);
             // fillHashMap();
-        } catch (final IOException e) {
+        } catch (final Exception e) {
             throw new InternalError(e);
         }
 

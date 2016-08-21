@@ -9,11 +9,15 @@ package es.ramon.casares.proyecto.modelo.snapshot.k2tree;
 import java.io.Serializable;
 import java.util.List;
 
+import es.ramon.casares.proyecto.modelo.matrix.MatrixOfPositions;
+import es.ramon.casares.proyecto.modelo.matrix.Posicion;
+import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
+
 // TODO: Auto-generated Javadoc
 /**
  * The Class K2Tree.
  */
-public class K2Tree implements Serializable {
+public class K2Tree extends Snapshot implements Serializable {
 
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = -1879911087111637327L;
@@ -117,4 +121,19 @@ public class K2Tree implements Serializable {
         this.idsObjetos = idsObjetos;
     }
 
+	@Override
+	public Posicion obtenerPosicionObjetoConId(Integer objetoId){
+		Posicion posicion = null;
+		Short id = objetoId.shortValue();
+		if (this.idsObjetos.contains(id)){
+			int index = this.idsObjetos.indexOf(id);
+			
+		}
+		// TODO Auto-generated method stub
+		return posicion;
+	}
+	
+
+	
+	
 }

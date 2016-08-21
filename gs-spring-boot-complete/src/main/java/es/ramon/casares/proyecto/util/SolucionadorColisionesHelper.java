@@ -68,8 +68,8 @@ public class SolucionadorColisionesHelper {
                 // Si esta en el mapa hay que cambiar
                 // la posicion anotada
                 final ObjetoMovil viejaPos = this.mapaIds.get(id);
-                final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getX(), viejaPos.getY());
-                if (this.posicionIds.get(viejaClaveNum).getId() == id) {
+                final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getPosicionX(), viejaPos.getPosicionY());
+                if (this.posicionIds.get(viejaClaveNum).getObjetoId() == id) {
                     this.posicionIds.remove(viejaClaveNum);
                 }
                 if (!this.posicionIds.containsKey(claveNum)) { // no hay colision
@@ -78,7 +78,7 @@ public class SolucionadorColisionesHelper {
                     final ObjetoMovil nuevaPosicion = encontrarPosicionLibre(id, instant,
                             claveNum.getX(), claveNum.getY());
                     numOfCollisions++;
-                    claveNum = new PosicionKey(nuevaPosicion.getX(), nuevaPosicion.getY());
+                    claveNum = new PosicionKey(nuevaPosicion.getPosicionX(), nuevaPosicion.getPosicionY());
                     anotarPosicionNoOcupada(id, claveNum, nuevaPosicion, writer);
                 }
             } else {
@@ -91,7 +91,7 @@ public class SolucionadorColisionesHelper {
                     // Posicion ocupada
                     final ObjetoMovil nuevaPosicion = encontrarPosicionLibre(id, instant,
                             claveNum.getX(), claveNum.getY());
-                    claveNum = new PosicionKey(nuevaPosicion.getX(), nuevaPosicion.getY());
+                    claveNum = new PosicionKey(nuevaPosicion.getPosicionX(), nuevaPosicion.getPosicionY());
 
                     anotarPosicionNoOcupada(id, claveNum, nuevaPosicion, writer);
                     numOfCollisions++;
@@ -124,8 +124,8 @@ public class SolucionadorColisionesHelper {
                 // Si esta en el mapa hay que cambiar
                 // la posicion anotada
                 final ObjetoMovil viejaPos = this.mapaIds.get(id);
-                final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getX(), viejaPos.getY());
-                if (this.posicionIds.get(viejaClaveNum).getId() == id) {
+                final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getPosicionX(), viejaPos.getPosicionY());
+                if (this.posicionIds.get(viejaClaveNum).getObjetoId() == id) {
                     this.posicionIds.remove(viejaClaveNum);
                 }
                 if (!this.posicionIds.containsKey(claveNum)) { // no hay colision
@@ -134,7 +134,7 @@ public class SolucionadorColisionesHelper {
                     final ObjetoMovil nuevaPosicion = encontrarPosicionLibre(id, instant,
                             claveNum.getX(), claveNum.getY());
                     numOfCollisions++;
-                    claveNum = new PosicionKey(nuevaPosicion.getX(), nuevaPosicion.getY());
+                    claveNum = new PosicionKey(nuevaPosicion.getPosicionX(), nuevaPosicion.getPosicionY());
                     anotarPosicionNoOcupada(id, claveNum, nuevaPosicion, null);
                 }
             } else {
@@ -147,7 +147,7 @@ public class SolucionadorColisionesHelper {
                     // Posicion ocupada
                     final ObjetoMovil nuevaPosicion = encontrarPosicionLibre(id, instant,
                             claveNum.getX(), claveNum.getY());
-                    claveNum = new PosicionKey(nuevaPosicion.getX(), nuevaPosicion.getY());
+                    claveNum = new PosicionKey(nuevaPosicion.getPosicionX(), nuevaPosicion.getPosicionY());
 
                     anotarPosicionNoOcupada(id, claveNum, nuevaPosicion, null);
                     numOfCollisions++;
@@ -176,7 +176,7 @@ public class SolucionadorColisionesHelper {
         this.posicionIds.put(claveNum, nuevaPos);
         this.mapaIds.put(id, nuevaPos);
         if (writer != null) {
-            writer.write(nuevaPos.getInstant() + " " + id + " " + nuevaPos.getX() + " " + nuevaPos.getY() + "\n");
+            writer.write(nuevaPos.getInstante() + " " + id + " " + nuevaPos.getPosicionX() + " " + nuevaPos.getPosicionY() + "\n");
         }
 
     }
