@@ -1,11 +1,12 @@
 /**
  * ControladorHelper.java 11-ago-2016
  *
- * Copyright 2016 INDITEX.
- * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import es.ramon.casares.proyecto.modelo.limite.LimitesBean;
 import es.ramon.casares.proyecto.modelo.log.Movimiento;
 
 public class ControladorHelper {
@@ -149,6 +151,31 @@ public class ControladorHelper {
             result.put(entry.getKey(), entry.getValue());
         }
         return result;
+    }
+    
+    public static LimitesBean analizadorDeLimites(File dataSet) throws IOException {
+    	int limite = 0;
+    	int idObjeto = 0;
+    	RandomAccessFile datareader = new RandomAccessFile(dataSet, "r");
+    	String currentLine;
+        while ((currentLine = datareader.readLine()) != null) {
+        	 final String[] result = currentLine.trim().split("\\s");
+        	 final int id = Integer.valueOf(result[1]);
+             final int x = Integer.valueOf(result[2]); // Longitud
+             final int y = Integer.valueOf(result[3]); // Latitud
+             if (id > idObjeto){
+            	 idObjeto = id;
+             }
+             if (x > limite){
+            	 limite = x;
+             }
+             if (y > limite){
+            	 limite = y;
+             }
+        }
+        LimitesBean limites = new LimitesBean(limite, idObjeto);
+        return limites;
+
     }
 
 }

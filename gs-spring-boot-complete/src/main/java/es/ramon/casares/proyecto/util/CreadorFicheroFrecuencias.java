@@ -1,8 +1,5 @@
 /**
  * CreadorFicheroFrecuencias.java 11-ago-2016
- *
- * Copyright 2016 INDITEX.
- * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.util;
 
@@ -182,10 +179,13 @@ public class CreadorFicheroFrecuencias {
 
 		this.movimientos = ControladorHelper.sortByValue(this.movimientos);
 		final Set<Movimiento> movimientosSet = this.movimientos.keySet();
+		int cont = 0;
 		for (final Movimiento mov : movimientosSet) {
-			
+			cont++;
 			writer.write(ControladorHelper.unidimensionar(mov.getX(), mov.getY())+ "\n");
+			writer.flush();
 		}
+		System.out.println(cont);
 
 	}
 

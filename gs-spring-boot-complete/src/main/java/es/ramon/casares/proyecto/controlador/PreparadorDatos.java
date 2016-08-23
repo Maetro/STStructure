@@ -1,8 +1,6 @@
 /**
  * PreparadorDatos.java 01-ago-2016
  *
- * Copyright 2016 INDITEX.
- * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.controlador;
 
@@ -22,6 +20,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +41,7 @@ import es.ramon.casares.proyecto.util.CreadorFicheroFrecuencias;
 import es.ramon.casares.proyecto.util.Normalizador;
 import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper;
 import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
+import es.ramon.casares.proyecto.util.SolucionadorRepetidosHelper;
 import es.ramon.casares.proyecto.util.parser.LineaEntradaParseada;
 import es.ramon.casares.proyecto.util.parser.ParseadorFicherosEntrada;
 import es.ramon.casares.proyecto.util.parser.impl.ParseadorFicherosEntradaImis;
@@ -581,71 +581,71 @@ public class PreparadorDatos {
         // Inicializamos el lector del fichero
         final InputStream is;
         try {
-            // is = ficheroEntrada.getInputStream();
-            //
-            // final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            // String line;
-            // final ParseadorFicherosEntrada parseador = new ParseadorFicherosEntradaImis(
-            // this.configuracion.getSegundosEntreInstantes());
-            //
-            // Double menorLatitud = 50000D;
-            // Double mayorLatitud = 0D;
-            // Double menorLongitud = 50000D;
-            // Double mayorLongitud = 0D;
-            // final Set<Integer> idsObjetos = new HashSet<Integer>();
-            // long numeroLineas = 0L;
-            // int ultimoInstante = 0;
-            // line = br.readLine();
-            // while ((line = br.readLine()) != null) {
-            // final LineaEntradaParseada linea = parseador.parsearLineaEntrada(line);
-            //
-            // if (linea.getPosX() > mayorLongitud) {
-            // mayorLongitud = linea.getPosX();
-            // }
-            // if (linea.getPosY() > mayorLatitud) {
-            // mayorLatitud = linea.getPosY();
-            // }
-            // if (linea.getPosX() < menorLongitud) {
-            // menorLongitud = linea.getPosX();
-            // }
-            // if (linea.getPosY() < menorLatitud) {
-            // menorLatitud = linea.getPosY();
-            // }
-            // idsObjetos.add(linea.getIdObjeto());
-            // ultimoInstante = linea.getInstante();
-            // numeroLineas++;
-            // }
-            // System.out.println("Analizando limites");
-            // analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
-            // ultimoInstante);
-            // System.out.println("Inicializar posiciones");
-            // inicializarPosiciones();
+//             is = ficheroEntrada.getInputStream();
+//            
+//             final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+//             String line;
+//             final ParseadorFicherosEntrada parseador = new ParseadorFicherosEntradaImis(
+//             this.configuracion.getSegundosEntreInstantes());
+//            
+//             Double menorLatitud = 50000D;
+//             Double mayorLatitud = 0D;
+//             Double menorLongitud = 50000D;
+//             Double mayorLongitud = 0D;
+//             final Set<Integer> idsObjetos = new HashSet<Integer>();
+//             long numeroLineas = 0L;
+//             int ultimoInstante = 0;
+//             line = br.readLine();
+//             while ((line = br.readLine()) != null) {
+//             final LineaEntradaParseada linea = parseador.parsearLineaEntrada(line);
+//            
+//             if (linea.getPosX() > mayorLongitud) {
+//             mayorLongitud = linea.getPosX();
+//             }
+//             if (linea.getPosY() > mayorLatitud) {
+//             mayorLatitud = linea.getPosY();
+//             }
+//             if (linea.getPosX() < menorLongitud) {
+//             menorLongitud = linea.getPosX();
+//             }
+//             if (linea.getPosY() < menorLatitud) {
+//             menorLatitud = linea.getPosY();
+//             }
+//             idsObjetos.add(linea.getIdObjeto());
+//             ultimoInstante = linea.getInstante();
+//             numeroLineas++;
+//             }
+//             System.out.println("Analizando limites");
+//             analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
+//             ultimoInstante);
+//             System.out.println("Inicializar posiciones");
+//             inicializarPosiciones();
              this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
              * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
-            // System.out.println("Velocidad máxima (cuadrados/instante):       " + this.limiteSuperior);
-            // br.close();
-            // is.close();
-            // System.out.println("Crear fichero normalizado");
-            // crearFicheroNormalizado();
-            // final Resource ficheroNormalizado = this.resourceLoader.getResource("classpath:imis1dayNormalizado");
-            //
-            // // Si un objeto produce varias notificaciones entre instantes habra datos de mas
-            // final SolucionadorRepetidosHelper solucionadorRepetidos = new SolucionadorRepetidosHelper();
-            // System.out.println("Eliminar datos repetidos");
-            // solucionadorRepetidos.resolverRepeticiones(ficheroNormalizado);
-            //
-            // final Resource ficheroSinRepeticiones =
-            // this.resourceLoader.getResource("classpath:datafileSinRepetidos");
-            //
-            // final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
-            // System.out.println("Solucionar colisiones");
+//             System.out.println("Velocidad máxima (cuadrados/instante):       " + this.limiteSuperior);
+//             br.close();
+//             is.close();
+//             System.out.println("Crear fichero normalizado");
+//             crearFicheroNormalizado();
+//             final Resource ficheroNormalizado = this.resourceLoader.getResource("classpath:imis1dayNormalizado");
+//            
+//             // Si un objeto produce varias notificaciones entre instantes habra datos de mas
+//             final SolucionadorRepetidosHelper solucionadorRepetidos = new SolucionadorRepetidosHelper();
+//             System.out.println("Eliminar datos repetidos");
+//             solucionadorRepetidos.resolverRepeticiones(ficheroNormalizado);
+//            
+//             final Resource ficheroSinRepeticiones =
+//             this.resourceLoader.getResource("classpath:datafileSinRepetidos");
+//            
+//             final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
+//             System.out.println("Solucionar colisiones");
 //             int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
-            
+//            
 //             System.out.println("Numero colisiones:  " + numColisiones);
-
+//
             final Resource ficheroSinColisiones =
                     this.resourceLoader.getResource("classpath:datafileSinColisiones");
-
+//
 //             final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
 //             System.out.println("Revisar colisiones");
 //             numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
@@ -655,6 +655,7 @@ public class PreparadorDatos {
             final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteSuperior);
             frecuenciasCreador.inicializar();
             frecuenciasCreador.crearFicheroFrecuencias(this.configuracion, ficheroSinColisiones);
+            System.out.println("Fichero frecuencias generado");
 //            CreadorEstructura creador = new CreadorEstructura(this.limiteSuperior, null , null);
 //            
 //            final Resource ficheroFrecuencias =

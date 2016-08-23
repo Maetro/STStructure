@@ -35,8 +35,9 @@ numbers:
   - 1
   - 6
 minimumsquare: 4
-distanciaEntreSnapshots: 1
+distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
+instantesHastaDesaparicion: 7
 metrosPorCelda: 30
 
 #En metros segundo
