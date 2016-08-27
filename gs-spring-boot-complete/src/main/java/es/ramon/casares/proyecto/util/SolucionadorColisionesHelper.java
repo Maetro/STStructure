@@ -1,6 +1,8 @@
 /**
  * SolucionadorColisionesHelperAlt.java 09-ago-2016
  *
+ * Copyright 2016 INDITEX.
+ * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.util;
 

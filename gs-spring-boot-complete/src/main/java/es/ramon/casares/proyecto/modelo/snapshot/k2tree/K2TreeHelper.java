@@ -1,6 +1,8 @@
 /**
  * K2TreeHelper.java 16-jun-2016
  *
+ * Copyright 2016 INDITEX.
+ * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.modelo.snapshot.k2tree;
 
@@ -15,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import no.uib.cipr.matrix.MatrixEntry;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -26,6 +26,8 @@ import es.ramon.casares.proyecto.modelo.matrix.RegionAnalizarBean;
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
 import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
+import es.ramon.casares.proyecto.util.ByteFileHelper;
+import no.uib.cipr.matrix.MatrixEntry;
 
 /**
  * The Class K2TreeHelper.
@@ -34,7 +36,7 @@ public class K2TreeHelper {
 
     /**
      * Generar k2 tree.
-     * 
+     *
      * @param listaInfo
      *            the lista info
      * @return the k2 tree
@@ -76,7 +78,7 @@ public class K2TreeHelper {
 
     /**
      * Generar permutacion.
-     * 
+     *
      * @param idsObjetos
      *            ids objetos
      * @return the permutation
@@ -123,7 +125,7 @@ public class K2TreeHelper {
 
     /**
      * Transformar lista en bytes.
-     * 
+     *
      * @param sampled
      *            sampled
      * @return the list
@@ -178,7 +180,7 @@ public class K2TreeHelper {
     // Cada numero de la lista representa un numero de 4 bits. podemos unir dos numeros en uno solo
     /**
      * Comprimir.
-     * 
+     *
      * @param listanumeros
      *            listanumeros
      * @return the list
@@ -205,7 +207,7 @@ public class K2TreeHelper {
 
     /**
      * Transformar enteros en byte.
-     * 
+     *
      * @param listanumeros
      *            listanumeros
      * @param position
@@ -219,7 +221,7 @@ public class K2TreeHelper {
 
     /**
      * Unir enteros en byte. Ambos enteros entre 0 y 15
-     * 
+     *
      * @param a
      *            a
      * @param b
@@ -263,7 +265,7 @@ public class K2TreeHelper {
             final ArrayList<Short> idsObjetos) {
 
         // System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        // System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
+        // System.out.println(" : [" + puntoXinferior + "," + puntoYinferior + "]");
 
         // Esquina SuperiorIzquierda
         Double valor = matriz.getMatriz().get(puntoYsuperior, puntoXinferior);
@@ -297,7 +299,7 @@ public class K2TreeHelper {
 
     /**
      * Analisis cuadrado.
-     * 
+     *
      * @param matriz
      *            the matriz
      * @param puntoXinferior
@@ -323,7 +325,7 @@ public class K2TreeHelper {
             final Integer puntoMedioX, final Integer nivel) {
 
         // System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        // System.out.println("                 : [" + puntoXinferior + "," + puntoYinferior + "]");
+        // System.out.println(" : [" + puntoXinferior + "," + puntoYinferior + "]");
         // Esquina SuperiorIzquierda
 
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoMedioY + 1, puntoMedioX, puntoYsuperior)) {
@@ -366,7 +368,7 @@ public class K2TreeHelper {
 
     /**
      * Hay valores en region.
-     * 
+     *
      * @param matriz
      *            the matriz
      * @param puntoXinferior
@@ -397,7 +399,7 @@ public class K2TreeHelper {
 
     /**
      * Obtener tamano k2 tree.
-     * 
+     *
      * @param snapshot
      *            snapshot
      * @return the int
@@ -419,7 +421,7 @@ public class K2TreeHelper {
 
     /**
      * Serializar k2 tree.
-     * 
+     *
      * @param k2Tree
      *            k2 tree
      * @return the byte[]
@@ -431,9 +433,9 @@ public class K2TreeHelper {
         final Integer bytesL = k2Tree.getL().size();
         final Integer bytesPerm = k2Tree.getIdsObjetos().size();
 
-        anadirEnteroAListaBytes(resultado, bytesT);
-        anadirEnteroAListaBytes(resultado, bytesL);
-        anadirEnteroAListaBytes(resultado, bytesPerm);
+        ByteFileHelper.anadirEnteroAListaBytes(resultado, bytesT);
+        ByteFileHelper.anadirEnteroAListaBytes(resultado, bytesL);
+        ByteFileHelper.anadirEnteroAListaBytes(resultado, bytesPerm);
 
         for (final Byte t : k2Tree.getT()) {
             resultado.add(t);
@@ -442,26 +444,12 @@ public class K2TreeHelper {
             resultado.add(l);
         }
         for (final Short perm : k2Tree.getIdsObjetos()) {
-            anadirShortAListaBytes(resultado, perm);
+            ByteFileHelper.anadirShortAListaBytes(resultado, perm);
         }
 
         final Byte[] bytes = resultado.toArray(new Byte[resultado.size()]);
         return ArrayUtils.toPrimitive(bytes);
 
-    }
-
-    private static void anadirEnteroAListaBytes(final List<Byte> resultado, final Integer num) {
-        final byte[] bytes = ByteBuffer.allocate(4).putInt(num).array();
-        for (final byte b : bytes) {
-            resultado.add(new Byte(b));
-        }
-    }
-
-    private static void anadirShortAListaBytes(final List<Byte> resultado, final Short num) {
-        final byte[] bytes = ByteBuffer.allocate(2).putShort(num).array();
-        for (final byte b : bytes) {
-            resultado.add(new Byte(b));
-        }
     }
 
     public static K2Tree generarK2Tree(final HashMap<PosicionKey, ObjetoMovil> posicionIds, final Integer limite,
@@ -473,7 +461,7 @@ public class K2TreeHelper {
 
     /**
      * Descomprimir snapshots. Se empieza en el byte 8 ya que los dos primeros enteros estan reservados.
-     * 
+     *
      * @param estructuraComprimida
      *            estructura comprimida
      * @param snapshots
@@ -492,21 +480,20 @@ public class K2TreeHelper {
         byte[] slice;
         while (snapshotsDescomprimidas < numSnapshots) {
             final K2Tree snapshot = new K2Tree();
-            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + 4);
-            pos = pos + 4;
+            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + ByteFileHelper.TAMANO_INTEGER);
+            pos = pos + ByteFileHelper.TAMANO_INTEGER;
             final Integer tamano = ByteBuffer.wrap(slice).getInt();
-            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + 4);
-            pos = pos + 4;
+            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + ByteFileHelper.TAMANO_INTEGER);
+            pos = pos + ByteFileHelper.TAMANO_INTEGER;
             final Integer bytesT = ByteBuffer.wrap(slice).getInt();
-            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + 4);
-            pos = pos + 4;
+            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + ByteFileHelper.TAMANO_INTEGER);
+            pos = pos + ByteFileHelper.TAMANO_INTEGER;
             final Integer bytesL = ByteBuffer.wrap(slice).getInt();
-            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + 4);
-            pos = pos + 4;
+            slice = Arrays.copyOfRange(estructuraComprimida, pos, pos + ByteFileHelper.TAMANO_INTEGER);
+            pos = pos + ByteFileHelper.TAMANO_INTEGER;
             final Integer bytesPerm = ByteBuffer.wrap(slice).getInt();
             final List<Byte> T = new ArrayList<Byte>();
             int i = 0;
-            final boolean correcto = tamano == (bytesT + bytesL + (bytesPerm * 2) + 12);
 
             for (i = 0; i < bytesT; i++) {
                 slice = Arrays.copyOfRange(estructuraComprimida, pos + i, pos + i + 1);
@@ -535,6 +522,7 @@ public class K2TreeHelper {
         }
         return pos;
     }
+
     // public static MatrixOfPositions obtenerMatriz(K2Tree k2Tree,int limite, int minimoCuadrado) {
     // MatrixOfPositions matriz = new MatrixOfPositions(limite, minimoCuadrado);
     // k2Tree.get

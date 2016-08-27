@@ -1,6 +1,8 @@
 /**
  * ControladorHelper.java 11-ago-2016
  *
+ * Copyright 2016 INDITEX.
+ * Departamento de Sistemas
  */
 package es.ramon.casares.proyecto.util;
 
@@ -14,8 +16,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import es.ramon.casares.proyecto.modelo.limite.LimitesBean;
 import es.ramon.casares.proyecto.modelo.log.Movimiento;
+import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
 
 public class ControladorHelper {
 
@@ -154,8 +156,8 @@ public class ControladorHelper {
     }
     
     public static LimitesBean analizadorDeLimites(File dataSet) throws IOException {
-    	int limite = 0;
-    	int idObjeto = 0;
+    	int limiteMovimiento = 0;
+    	int idObjetoMayo = 0;
     	RandomAccessFile datareader = new RandomAccessFile(dataSet, "r");
     	String currentLine;
         while ((currentLine = datareader.readLine()) != null) {
@@ -163,17 +165,17 @@ public class ControladorHelper {
         	 final int id = Integer.valueOf(result[1]);
              final int x = Integer.valueOf(result[2]); // Longitud
              final int y = Integer.valueOf(result[3]); // Latitud
-             if (id > idObjeto){
-            	 idObjeto = id;
+             if (id > idObjetoMayo){
+            	 idObjetoMayo = id;
              }
-             if (x > limite){
-            	 limite = x;
+             if (x > limiteMovimiento){
+            	 limiteMovimiento = x;
              }
-             if (y > limite){
-            	 limite = y;
+             if (y > limiteMovimiento){
+            	 limiteMovimiento = y;
              }
         }
-        LimitesBean limites = new LimitesBean(limite, idObjeto);
+        LimitesBean limites = new LimitesBean(limiteMovimiento, idObjetoMayo);
         return limites;
 
     }

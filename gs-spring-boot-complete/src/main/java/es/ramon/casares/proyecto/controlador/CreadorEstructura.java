@@ -1,9 +1,17 @@
+/**
+ * CreadorEstructura.java 25-ago-2016
+ *
+ * Copyright 2016 INDITEX.
+ * Departamento de Sistemas
+ */
 package es.ramon.casares.proyecto.controlador;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -268,6 +276,9 @@ public class CreadorEstructura {
         final List<Integer> word = this.encoder.encode(posicionNumero);
         word.add(x);
         word.add(y);
+        if (nuevaPos.getInstante() == 1739) {
+            System.out.println("A id: " + id + " word: " + word);
+        }
         this.mapaDeLog.put(id, word);
 
     }
@@ -289,6 +300,9 @@ public class CreadorEstructura {
         numeroEspiral = ControladorHelper.unidimensionar(movimiento.getX(), movimiento.getY());
         posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
         word.addAll(this.encoder.encode(posicionNumero));
+        if (nuevaPos.getInstante() == 1739) {
+            System.out.println("R id: " + id + " word: " + word);
+        }
         this.mapaDeLog.put(id, word);
 
     }
@@ -302,7 +316,7 @@ public class CreadorEstructura {
         if (viejaPos != null) {
             final int diferenciaX = nuevaPos.getPosicionX() - viejaPos.getPosicionX();
             final int diferenciaY = nuevaPos.getPosicionY() - viejaPos.getPosicionY();
-            if ((Math.abs(diferenciaX) <= this.limiteLog) && (Math.abs(diferenciaY) <= this.limiteLog)) {
+            if (movimientoDentroLimites(diferenciaX, diferenciaY)) {
                 movimiento = new Movimiento(diferenciaX, diferenciaY);
                 Integer num = this.movimientos.get(movimiento);
                 num++;
@@ -311,7 +325,17 @@ public class CreadorEstructura {
                 final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
 
                 final List<Integer> word = this.encoder.encode(posicionNumero);
-                System.out.println(word);
+                Collections.reverse(word);
+                if (this.encoder.decode(word) != posicionNumero) {
+                    System.out.println("Problema " + posicionNumero);
+                    this.encoder.encode(35);
+
+                    this.encoder.decode(Arrays.asList(11, 0));
+                }
+
+                if (nuevaPos.getInstante() == 1739) {
+                    System.out.println("id: " + id + " word: " + word);
+                }
                 this.mapaDeLog.put(id, word);
             }
 
@@ -319,5 +343,19 @@ public class CreadorEstructura {
         this.posicionIds.put(claveNum, nuevaPos);
         this.mapaIds.put(id, nuevaPos);
 
+    }
+
+    /**
+     * Movimiento dentro limites.
+     * 
+     * @param diferenciaX
+     *            diferencia x
+     * @param diferenciaY
+     *            diferencia y
+     * @return true, si termina correctamente
+     */
+    private boolean movimientoDentroLimites(final int diferenciaX, final int diferenciaY) {
+        return (Math.abs(diferenciaX) <= this.limiteLog) && (Math.abs(diferenciaY) <= this.limiteLog)
+                && ((Math.abs(diferenciaX) + Math.abs(diferenciaY)) <= ((this.limiteLog * 2) - 1));
     }
 }

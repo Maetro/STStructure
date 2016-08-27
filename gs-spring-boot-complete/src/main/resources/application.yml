@@ -22,6 +22,8 @@ minimumSquare: 4
 S: 5
 C: 11
 
+chunkSize: 4
+
 ---
 
 spring:
