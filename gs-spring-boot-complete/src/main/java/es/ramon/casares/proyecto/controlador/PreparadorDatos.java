@@ -13,19 +13,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import es.ramon.casares.proyecto.modelo.objetos.ObjectDataConGaps;
-import es.ramon.casares.proyecto.modelo.objetos.ObjectInformation;
-import es.ramon.casares.proyecto.modelo.objetos.Point;
 import es.ramon.casares.proyecto.util.ConfiguracionHelper;
 import es.ramon.casares.proyecto.util.ControladorHelper;
 import es.ramon.casares.proyecto.util.CreadorFicheroFrecuencias;
@@ -43,6 +41,12 @@ import es.ramon.casares.proyecto.util.parser.impl.ParseadorFicherosEntradaImis;
 @RestController
 public class PreparadorDatos {
 
+    /** The Constant PARAMETRO_CORRECCION_CURVATURA. */
+    private static final double PARAMETRO_CORRECCION_CURVATURA = 0.001;
+
+    /** The logger. */
+    private static final Logger logger = LoggerFactory.getLogger(CreadorEstructura.class);
+
     /** The configuracion. */
     @Autowired
     private ConfiguracionHelper configuracion;
@@ -57,18 +61,6 @@ public class PreparadorDatos {
     /** The numero objetos. */
     private int numeroObjetos;
 
-    /** The mapa ids. */
-    private final HashMap<Integer, ObjectDataConGaps> mapaIds = new HashMap<Integer, ObjectDataConGaps>();
-
-    /** The map information ids. */
-    private final HashMap<Integer, ObjectInformation> mapInformationIds = new HashMap<Integer, ObjectInformation>();
-
-    /** The map ids desaparecidos. */
-    private final HashMap<Integer, String> mapIdsDesaparecidos = new HashMap<Integer, String>();
-
-    /** The last known position. */
-    private final HashMap<Integer, Point> lastKnownPosition = new HashMap<Integer, Point>();
-
     /** The normalizador. */
     private Normalizador normalizador;
 
@@ -80,35 +72,13 @@ public class PreparadorDatos {
     }
 
     /**
-     * Inicializar posiciones.
-     *
-     * @throws IOException
-     *             Signals that an I/O exception has occurred.
-     */
-    private void inicializarPosiciones() throws IOException {
-        final Point newPoint = new Point(0, -1, -1, this.configuracion.getMetrosPorCelda());
-        final ObjectDataConGaps data = new ObjectDataConGaps();
-        data.setPoint(newPoint);
-        for (int i = 1; i <= this.numeroObjetos; i++) {
-            data.setObjectId(i);
-            this.mapaIds.put(i, data);
-            this.mapInformationIds.put(i, new ObjectInformation(0d, 0d));
-            this.mapIdsDesaparecidos.put(i, "-1:-1");
-            this.lastKnownPosition.put(i, new Point(0, -1, -1, this.configuracion.getMetrosPorCelda())); // Desconocido
-                                                                                                         // es
-                                                                                                         // -1:-1
-        }
-
-    }
-
-    /**
      * En el primer analisis se establecen los limites del mapa y el numero de objetos diferentes que existen.
      *
      * @throws ImpossibleToSolveColisionException
      * @throws NumberFormatException
      */
     @RequestMapping("/analizar")
-    private void primerAnalisis() throws NumberFormatException, ImpossibleToSolveColisionException {
+    private String primerAnalisis() throws NumberFormatException, ImpossibleToSolveColisionException {
         final Resource ficheroEntrada = this.resourceLoader.getResource("classpath:imis1day");
         // Inicializamos el lector del fichero
         final InputStream is;
@@ -120,9 +90,9 @@ public class PreparadorDatos {
             final ParseadorFicherosEntrada parseador = new ParseadorFicherosEntradaImis(
                     this.configuracion.getSegundosEntreInstantes());
 
-            Double menorLatitud = 50000D;
+            Double menorLatitud = new Double(Integer.MAX_VALUE);
             Double mayorLatitud = 0D;
-            Double menorLongitud = 50000D;
+            Double menorLongitud = new Double(Integer.MAX_VALUE);
             Double mayorLongitud = 0D;
             final Set<Integer> idsObjetos = new HashSet<Integer>();
             long numeroLineas = 0L;
@@ -147,51 +117,77 @@ public class PreparadorDatos {
                 ultimoInstante = linea.getInstante();
                 numeroLineas++;
             }
-            System.out.println("Analizando limites");
+            logger.info("Analizando limites");
             analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
                     ultimoInstante);
-            System.out.println("Inicializar posiciones");
-            inicializarPosiciones();
             this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                     * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
-            System.out.println("Velocidad máxima (cuadrados/instante): " + this.limiteSuperior);
+            logger.info("Velocidad máxima (cuadrados/instante): " + this.limiteSuperior);
             br.close();
             is.close();
-            System.out.println("Crear fichero normalizado");
+            logger.info("Crear fichero normalizado");
             crearFicheroNormalizado();
-            final Resource ficheroNormalizado = this.resourceLoader.getResource("classpath:imis1dayNormalizado");
+            final Resource ficheroNormalizado = this.resourceLoader.getResource("classpath:ficheroNormalizado");
 
             // Si un objeto produce varias notificaciones entre instantes habra datos de mas
             final SolucionadorRepetidosHelper solucionadorRepetidos = new SolucionadorRepetidosHelper();
-            System.out.println("Eliminar datos repetidos");
+            logger.info("Eliminar datos repetidos");
             solucionadorRepetidos.resolverRepeticiones(ficheroNormalizado);
 
-            final Resource ficheroSinRepeticiones = this.resourceLoader.getResource("classpath:datafileSinRepetidos");
+            final Resource ficheroSinRepeticiones = this.resourceLoader.getResource("classpath:ficheroSinRepetidos");
 
-            final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
-            System.out.println("Solucionar colisiones");
-            int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
+            final Resource ficheroSinColisiones = tratarColisionesEnDataSet(ficheroSinRepeticiones);
 
-            System.out.println("Numero colisiones: " + numColisiones);
+            crearFicheroFrecuencias(ficheroSinColisiones);
 
-            final Resource ficheroSinColisiones = this.resourceLoader.getResource("classpath:datafileSinColisiones");
-
-            final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
-            System.out.println("Revisar colisiones");
-            numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
-
-            System.out.println("Numero colisiones final : " + numColisiones);
-
-            final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteSuperior);
-            frecuenciasCreador.inicializar();
-            frecuenciasCreador.crearFicheroFrecuencias(this.configuracion, ficheroSinColisiones);
-            System.out.println("Fichero frecuencias generado");
+            return "DONE";
         } catch (final Exception e) {
             throw new InternalError(e);
         }
 
     }
 
+    /**
+     * Tratar colisiones en data set.
+     *
+     * @param ficheroSinRepeticiones
+     *            the fichero sin repeticiones
+     * @return the resource
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     * @throws ImpossibleToSolveColisionException
+     *             the impossible to solve colision exception
+     */
+    private Resource tratarColisionesEnDataSet(final Resource ficheroSinRepeticiones)
+            throws IOException, ImpossibleToSolveColisionException {
+        final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
+
+        logger.info("Solucionar colisiones");
+        int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
+
+        logger.info("Numero colisiones: " + numColisiones);
+
+        final Resource ficheroSinColisiones = this.resourceLoader.getResource("classpath:datafileSinColisiones");
+
+        final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
+        logger.info("Revisar colisiones");
+        numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
+
+        logger.info("Numero colisiones final : " + numColisiones);
+        return ficheroSinColisiones;
+    }
+
+    private void crearFicheroFrecuencias(final Resource ficheroSinColisiones)
+            throws IOException, ImpossibleToSolveColisionException {
+        final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteSuperior);
+        frecuenciasCreador.inicializar();
+        frecuenciasCreador.crearFicheroFrecuencias(this.configuracion, ficheroSinColisiones);
+        logger.info("Fichero frecuencias generado");
+    }
+
+    /**
+     * Crear fichero normalizado.
+     */
     private void crearFicheroNormalizado() {
         final Resource ficheroEntrada = this.resourceLoader.getResource("classpath:imis1day");
 
@@ -199,20 +195,16 @@ public class PreparadorDatos {
         InputStream is;
 
         try {
-            // create new file
 
-            final File file = new File("src/main/resources/imis1dayNormalizado");
+            final File file = new File("src/main/resources/ficheroNormalizado");
 
-            // if file doesnt exists, then create it
+            // si el fichero no eiste lo creamos
             if (!file.exists()) {
                 file.createNewFile();
             }
 
             final FileWriter fw = new FileWriter(file.getAbsoluteFile());
             final BufferedWriter bw = new BufferedWriter(fw);
-            // write in file
-
-            // close connection
 
             is = ficheroEntrada.getInputStream();
 
@@ -231,11 +223,12 @@ public class PreparadorDatos {
                         + this.normalizador.calcularYnormalizado(datos.getPosY()) + "\n";
 
                 bw.write(lineaActual);
+                bw.flush();
             }
             bw.close();
             br.close();
             is.close();
-            System.out.println("Fichero normalizado creado");
+            logger.info("Fichero normalizado creado");
         } catch (final IOException e) {
 
             e.printStackTrace();
@@ -270,16 +263,16 @@ public class PreparadorDatos {
         if (ladoSuperior >= ladoInferior) {
             // Hemisferio Sur
             while (ladoSuperior >= ladoInferior) {
-                menorLongitudCorregida -= 0.001;
-                mayorLongitudCorregida += 0.001;
+                menorLongitudCorregida -= PARAMETRO_CORRECCION_CURVATURA;
+                mayorLongitudCorregida += PARAMETRO_CORRECCION_CURVATURA;
                 ladoInferior = ControladorHelper.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
                         mayorLongitudCorregida);
             }
         } else {
             // Hemisferio Norte
             while (ladoInferior >= ladoSuperior) {
-                menorLongitudCorregida -= 0.001;
-                mayorLongitudCorregida += 0.001;
+                menorLongitudCorregida -= PARAMETRO_CORRECCION_CURVATURA;
+                mayorLongitudCorregida += PARAMETRO_CORRECCION_CURVATURA;
                 ladoSuperior = ControladorHelper.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
                         mayorLongitudCorregida);
             }
@@ -289,25 +282,9 @@ public class PreparadorDatos {
                 mayorLongitud);
         final int numeroCeldasLado = (int) Math
                 .ceil((Math.max(ladoLateral, ladoSuperior) * 1000) / this.configuracion.getMetrosPorCelda());
-        System.out.println("***********************************");
-        System.out.println("Número Lineas:              " + numeroLineas);
-        System.out.println("Mayor Longitud:             " + mayorLongitud);
-        System.out.println("Menor Longitud:             " + menorLongitud);
-        System.out.println("Mayor Longitud Corregida:   " + mayorLongitudCorregida);
-        System.out.println("Menor Longitud Corregida:   " + menorLongitudCorregida);
-        System.out.println("Mayor Latitud:              " + mayorLatitud);
-        System.out.println("Menor Latitud:              " + menorLatitud);
-        System.out.println("Último instante:            " + ultimoInstante);
-        System.out.println("Número objetos:             " + idsObjetos.size());
-        System.out.println("Distancias (Lado superior): " + ladoSuperior);
-        System.out.println("Distancias (Lado inferior): " + ladoInferior);
-        System.out.println("Distancias (Lado Izq):      " + ladoLateral);
-        System.out.println("Distancias (Lado Dcho):     " + ladoLateral);
-        System.out.println("Distancias (Hipotenusa):    "
-                + ControladorHelper.haversine_km(menorLatitud, menorLongitud, mayorLatitud, mayorLongitud));
-        System.out.println("Numero cuadrados lado:      " + numeroCeldasLado);
-        System.out.println("Numero cuadrados totales:   " + (numeroCeldasLado * numeroCeldasLado));
-        System.out.println("***********************************");
+        escribirInformacionObtenida(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
+                ultimoInstante, ladoSuperior, ladoInferior, menorLongitudCorregida, mayorLongitudCorregida, ladoLateral,
+                numeroCeldasLado);
         this.numeroObjetos = 0;
         for (final Integer integer : idsObjetos) {
             if (this.numeroObjetos < integer) {
@@ -319,5 +296,61 @@ public class PreparadorDatos {
                 mayorLongitudCorregida,
                 numeroCeldasLado);
 
+    }
+
+    /**
+     * Escribir informacion obtenida.
+     *
+     * @param menorLatitud
+     *            the menor latitud
+     * @param mayorLatitud
+     *            the mayor latitud
+     * @param menorLongitud
+     *            the menor longitud
+     * @param mayorLongitud
+     *            the mayor longitud
+     * @param idsObjetos
+     *            the ids objetos
+     * @param numeroLineas
+     *            the numero lineas
+     * @param ultimoInstante
+     *            the ultimo instante
+     * @param ladoSuperior
+     *            the lado superior
+     * @param ladoInferior
+     *            the lado inferior
+     * @param menorLongitudCorregida
+     *            the menor longitud corregida
+     * @param mayorLongitudCorregida
+     *            the mayor longitud corregida
+     * @param ladoLateral
+     *            the lado lateral
+     * @param numeroCeldasLado
+     *            the numero celdas lado
+     */
+    private void escribirInformacionObtenida(final Double menorLatitud, final Double mayorLatitud,
+            final Double menorLongitud, final Double mayorLongitud, final Set<Integer> idsObjetos,
+            final long numeroLineas, final int ultimoInstante, final double ladoSuperior, final double ladoInferior,
+            final double menorLongitudCorregida, final double mayorLongitudCorregida, final double ladoLateral,
+            final int numeroCeldasLado) {
+        logger.info("***********************************");
+        logger.info("Número Lineas:              " + numeroLineas);
+        logger.info("Mayor Longitud:             " + mayorLongitud);
+        logger.info("Menor Longitud:             " + menorLongitud);
+        logger.info("Mayor Longitud Corregida:   " + mayorLongitudCorregida);
+        logger.info("Menor Longitud Corregida:   " + menorLongitudCorregida);
+        logger.info("Mayor Latitud:              " + mayorLatitud);
+        logger.info("Menor Latitud:              " + menorLatitud);
+        logger.info("Último instante:            " + ultimoInstante);
+        logger.info("Número objetos:             " + idsObjetos.size());
+        logger.info("Distancias (Lado superior): " + ladoSuperior);
+        logger.info("Distancias (Lado inferior): " + ladoInferior);
+        logger.info("Distancias (Lado Izq):      " + ladoLateral);
+        logger.info("Distancias (Lado Dcho):     " + ladoLateral);
+        logger.info("Distancias (Hipotenusa):    "
+                + ControladorHelper.haversine_km(menorLatitud, menorLongitud, mayorLatitud, mayorLongitud));
+        logger.info("Numero cuadrados lado:      " + numeroCeldasLado);
+        logger.info("Numero cuadrados totales:   " + (numeroCeldasLado * numeroCeldasLado));
+        logger.info("***********************************");
     }
 }

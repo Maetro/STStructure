@@ -16,15 +16,21 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import es.ramon.casares.proyecto.modelo.log.Movimiento;
 import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
 
 public class ControladorHelper {
 
+    /** The logger. */
+    private final static Logger logger = LoggerFactory.getLogger(ControladorHelper.class);
+
     // calculate haversine distance for linear distance
     /**
      * Haversine_km.
-     * 
+     *
      * @param lat1
      *            lat1
      * @param long1
@@ -35,8 +41,7 @@ public class ControladorHelper {
      *            long2
      * @return the double
      */
-    public static double haversine_km(final double lat1, final double long1, final double lat2, final double long2)
-    {
+    public static double haversine_km(final double lat1, final double long1, final double lat2, final double long2) {
         final double d2r = Math.PI / 180.0;
         final double dlong = (long2 - long1) * d2r;
         final double dlat = (lat2 - lat1) * d2r;
@@ -51,7 +56,7 @@ public class ControladorHelper {
     /* La clave debe ser X:Y */
     /**
      * Unidimensionar.
-     * 
+     *
      * @param x
      *            x
      * @param y
@@ -101,11 +106,11 @@ public class ControladorHelper {
 
             if (temp2 > mov) {
                 // Lado Abajo
-                return new Movimiento(((-dividido) + (temp2 - mov)), - dividido);
+                return new Movimiento(((-dividido) + (temp2 - mov)), -dividido);
             } else {
                 // Lado Izquierdo
                 return new Movimiento(-dividido, ((-dividido) + (mov - temp2)));
-            
+
             }
         } else {
             // Impar
@@ -114,7 +119,7 @@ public class ControladorHelper {
             final int y = dividido;
             if (temp2 >= mov) {
                 // Lado arriba
-            	return new Movimiento((x - (temp2 - mov)), y);
+                return new Movimiento((x - (temp2 - mov)), y);
 
             } else {
                 // Lado derecha
@@ -123,10 +128,10 @@ public class ControladorHelper {
         }
 
     }
-    
+
     /**
      * Sort by value.
-     * 
+     *
      * @param <K>
      *            tipo de clave
      * @param <V>
@@ -135,47 +140,45 @@ public class ControladorHelper {
      *            map
      * @return the map
      */
-    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(final Map<K, V> map)
-    {
-        final List<Map.Entry<K, V>> list =
-                new LinkedList<Map.Entry<K, V>>(map.entrySet());
-        Collections.sort(list, new Comparator<Map.Entry<K, V>>()
-        {
-            public int compare(final Map.Entry<K, V> o1, final Map.Entry<K, V> o2)
-            {
+    public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(final Map<K, V> map) {
+        final List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>(map.entrySet());
+        Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
+            public int compare(final Map.Entry<K, V> o1, final Map.Entry<K, V> o2) {
                 return (o2.getValue()).compareTo(o1.getValue());
             }
         });
 
         final Map<K, V> result = new LinkedHashMap<K, V>();
-        for (final Map.Entry<K, V> entry : list)
-        {
+        for (final Map.Entry<K, V> entry : list) {
             result.put(entry.getKey(), entry.getValue());
         }
         return result;
     }
-    
-    public static LimitesBean analizadorDeLimites(File dataSet) throws IOException {
-    	int limiteMovimiento = 0;
-    	int idObjetoMayo = 0;
-    	RandomAccessFile datareader = new RandomAccessFile(dataSet, "r");
-    	String currentLine;
+
+    public static LimitesBean analizadorDeLimites(final File dataSet) throws IOException {
+        int limiteMovimiento = 0;
+        int idObjetoMayo = 0;
+        final RandomAccessFile datareader = new RandomAccessFile(dataSet, "r");
+        String currentLine;
         while ((currentLine = datareader.readLine()) != null) {
-        	 final String[] result = currentLine.trim().split("\\s");
-        	 final int id = Integer.valueOf(result[1]);
-             final int x = Integer.valueOf(result[2]); // Longitud
-             final int y = Integer.valueOf(result[3]); // Latitud
-             if (id > idObjetoMayo){
-            	 idObjetoMayo = id;
-             }
-             if (x > limiteMovimiento){
-            	 limiteMovimiento = x;
-             }
-             if (y > limiteMovimiento){
-            	 limiteMovimiento = y;
-             }
+            final String[] result = currentLine.trim().split("\\s");
+            if (result.length >= 3) {
+                logger.debug("Limites: " + result[0]);
+                final int id = Integer.valueOf(result[1]);
+                final int x = Integer.valueOf(result[2]); // Longitud
+                final int y = Integer.valueOf(result[3]); // Latitud
+                if (id > idObjetoMayo) {
+                    idObjetoMayo = id;
+                }
+                if (x > limiteMovimiento) {
+                    limiteMovimiento = x;
+                }
+                if (y > limiteMovimiento) {
+                    limiteMovimiento = y;
+                }
+            }
         }
-        LimitesBean limites = new LimitesBean(limiteMovimiento, idObjetoMayo);
+        final LimitesBean limites = new LimitesBean(limiteMovimiento, idObjetoMayo);
         return limites;
 
     }

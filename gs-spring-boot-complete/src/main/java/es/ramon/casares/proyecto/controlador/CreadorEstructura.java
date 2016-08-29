@@ -1,16 +1,17 @@
 /**
- * CreadorEstructura.java 25-ago-2016
+ * CreadorEstructura.java 27-ago-2016
  *
- * Copyright 2016 INDITEX.
- * Departamento de Sistemas
+ * Copyright 2016 RAMON CASARES.
+ * @author Ramon.Casares.Porto@gmail.com
  */
+
 package es.ramon.casares.proyecto.controlador;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
@@ -30,68 +33,114 @@ import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
 import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
 import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
 import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
+import es.ramon.casares.proyecto.util.ByteFileHelper;
+import es.ramon.casares.proyecto.util.CompresorEstructuraHelper;
 import es.ramon.casares.proyecto.util.ConfiguracionHelper;
 import es.ramon.casares.proyecto.util.ControladorHelper;
 import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
 
+/**
+ * The Class CreadorEstructura.
+ */
 public class CreadorEstructura {
 
-    // Las posiciones ocupadas en el momento actual del fichero
+    /** The logger. */
+    private static final Logger logger = LoggerFactory.getLogger(CreadorEstructura.class);
+
+    /** Las posiciones ocupadas en el momento actual del fichero. */
     private final HashMap<PosicionKey, ObjetoMovil> posicionIds = new HashMap<PosicionKey, ObjetoMovil>();
 
+    /** The movimientos. */
     private final Map<Movimiento, Integer> movimientos = new HashMap<Movimiento, Integer>();
 
+    /** The desaparecido relativo. */
     private final Set<Integer> desaparecidoRelativo = new HashSet<Integer>();
 
-    // mapa que guarda el estado del objeto en el instante de la desaparicion
+    /** mapa que guarda el estado del objeto en el instante de la desaparicion. */
     private final Map<Integer, ObjetoMovil> ultimaPosicionDesaparecidos = new HashMap<Integer, ObjetoMovil>();
 
+    /** The mapa de log. */
     private final Map<Integer, List<Integer>> mapaDeLog = new HashMap<Integer, List<Integer>>();
 
+    /** The limite log. */
     private Integer limiteLog;
+
+    /** The limite snapshot. */
     private Integer limiteSnapshot;
+
+    /** The numero objetos. */
     private Integer numeroObjetos;
 
+    /** The datareader. */
     private RandomAccessFile datareader; // es
 
+    /** The desaparicion. */
     private Movimiento desaparicion;
+
+    /** The reaparicion. */
     private Movimiento reaparicion;
+
+    /** The reaparicion absoluta. */
     private Movimiento reaparicionAbsoluta;
 
+    /** The movimientos por frecuencia. */
     private final List<Integer> movimientosPorFrecuencia = new ArrayList<Integer>();
 
     /** The mapa ids. */
     private final HashMap<Integer, ObjetoMovil> mapaIds = new HashMap<Integer, ObjetoMovil>();
 
-    private final Map<Integer, Snapshot> snapshots = new HashMap<Integer, Snapshot>();
+    /** The snapshots. */
+    private Snapshot snapshot;
 
-    private final Map<Integer, Log> logs = new HashMap<Integer, Log>();
+    /** The logs. */
+    private final List<Log> logs = new ArrayList<Log>();
 
+    /** The encoder. */
     private SCDenseCoder encoder;
 
+    /** The numero bloques. */
+    private int numeroBloques = 0;
+
+    /** The punteros. */
+    private final List<Integer> punteros = new ArrayList<Integer>();
+
+    private int puntero;
+
+    /**
+     * Instantiates a new creador estructura.
+     */
     public CreadorEstructura() {
     }
 
     /**
      * Instancia un nuevo creador fichero frecuencias.
-     * 
-     * @param limiteLog
+     *
+     * @param limiteLogP
      *            limite
+     * @param limiteSnapshotP
+     *            the limite snapshot
+     * @param numeroObjetosP
+     *            the numero objetos
      */
-    public CreadorEstructura(final Integer limiteLog, final Integer limiteSnapshot, final Integer numeroObjetos) {
-        this.limiteLog = limiteLog;
-        this.limiteSnapshot = limiteSnapshot;
-        this.numeroObjetos = numeroObjetos;
+    public CreadorEstructura(final Integer limiteLogP, final Integer limiteSnapshotP, final Integer numeroObjetosP) {
+        this.limiteLog = limiteLogP;
+        this.limiteSnapshot = limiteSnapshotP;
+        this.numeroObjetos = numeroObjetosP;
     }
 
     /**
      * Inicializar.
-     * 
-     * @param configuracion2
-     * @throws IOException
+     *
+     * @param ficheroFrecuencias
+     *            the fichero frecuencias
+     * @param configuracion
+     *            the configuracion
      * @throws FileNotFoundException
+     *             the file not found exception
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
      */
-    public void inicializar(final Resource ficheroFrecuencias, final ConfiguracionHelper configuracion)
+    public final void inicializar(final Resource ficheroFrecuencias, final ConfiguracionHelper configuracion)
             throws FileNotFoundException, IOException {
 
         this.desaparicion = new Movimiento(this.limiteLog, this.limiteLog);
@@ -113,88 +162,138 @@ public class CreadorEstructura {
 
     }
 
-    public Estructura crearEstructura(final Resource fichero, final ConfiguracionHelper configuracion)
+    /**
+     * Crear estructura.
+     *
+     * @param fichero
+     *            the fichero
+     * @param configuracion
+     *            the configuracion
+     * @return the estructura
+     * @throws NumberFormatException
+     *             the number format exception
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     * @throws ImpossibleToSolveColisionException
+     *             the impossible to solve colision exception
+     */
+    public final List<Integer> crearEstructura(final Resource fichero, final ConfiguracionHelper configuracion)
             throws NumberFormatException, IOException, ImpossibleToSolveColisionException {
         String currentLine;
 
-        System.out.println("Generando estructura");
-
+        logger.info("Generando estructura");
+        final FileOutputStream tempFile = ByteFileHelper
+                .crearFicheroEscrituraSiNoExiste("src/main/resources/EstructuraTemporal");
         int lastInstant = 0;
         this.datareader = new RandomAccessFile(fichero.getFile(), "r");
 
         while ((currentLine = this.datareader.readLine()) != null) {
             final String[] result = currentLine.trim().split("\\s");
-            final int instant = Integer.valueOf(result[0]); // En segundos
-            final int id = Integer.valueOf(result[1]);
-            final int x = Integer.valueOf(result[2]); // Longitud
-            final int y = Integer.valueOf(result[3]); // Latitud
+            if (result.length >= 3) {
+                final int instant = Integer.valueOf(result[0]); // En segundos
+                final int id = Integer.valueOf(result[1]);
+                final int x = Integer.valueOf(result[2]); // Longitud
+                final int y = Integer.valueOf(result[3]); // Latitud
 
-            // if (id == 4222) System.out.println(instant + " " + id + " " + x + " " + y);
-            if (instant != lastInstant) {
-                // Cambio de instante. Comprobamos si algun objeto ha
-                // desaparecido
-                if ((instant - lastInstant) > 1) {
-                    // Hay instantes que no tienen ningun movimiento registrado
-                    while (lastInstant < (instant - 1)) {
-                        lastInstant++;
-                        lastInstant = procesarCambioInstante(configuracion, lastInstant);
+                lastInstant = analizarCambioInstante(configuracion, lastInstant, instant, tempFile);
 
+                final PosicionKey claveNum = new PosicionKey(x, y);
+                final ObjetoMovil nuevaPos = new ObjetoMovil(id, instant, x, y);
+
+                if (this.mapaIds.containsKey(id)) {
+                    // Si esta en el mapa hay que cambiar
+                    // la posicion anotada
+                    final ObjetoMovil viejaPos = this.mapaIds.get(id);
+                    final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getPosicionX(), viejaPos.getPosicionY());
+                    if (this.posicionIds.get(viejaClaveNum).getObjetoId() == id) {
+                        this.posicionIds.remove(viejaClaveNum);
+                        this.mapaIds.remove(viejaClaveNum);
                     }
 
-                }
-
-                lastInstant = procesarCambioInstante(configuracion, instant);
-            }
-
-            final PosicionKey claveNum = new PosicionKey(x, y);
-            final ObjetoMovil nuevaPos = new ObjetoMovil(id, instant, x, y);
-
-            if (this.mapaIds.containsKey(id)) {
-                // Si esta en el mapa hay que cambiar
-                // la posicion anotada
-                final ObjetoMovil viejaPos = this.mapaIds.get(id);
-                final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getPosicionX(), viejaPos.getPosicionY());
-                if (this.posicionIds.get(viejaClaveNum).getObjetoId() == id) {
-                    this.posicionIds.remove(viejaClaveNum);
-                    this.mapaIds.remove(viejaClaveNum);
-                }
-
-                if (!this.posicionIds.containsKey(claveNum)) { // no hay
-                                                               // colision
-                    anotarMovimiento(id, claveNum, nuevaPos, viejaPos);
-                } else { // Hay colision
-
-                    throw new InternalError("COLISION");
-                }
-            } else {
-                // Es la primera vez que se anota este objeto o estaba
-                // desaparecido
-                // Miramos si su posicion esta ocupada
-                if (this.desaparecidoRelativo.contains(id)) {
                     if (!this.posicionIds.containsKey(claveNum)) { // no hay
                                                                    // colision
-                        anotarReaparicionRelativa(id, x, y, nuevaPos);
+                        anotarMovimiento(id, claveNum, nuevaPos, viejaPos);
                     } else { // Hay colision
+
                         throw new InternalError("COLISION");
                     }
-
-                }
-
-                if (instant == 0) {
-                    // Posicion libre
-                    anotarMovimiento(id, claveNum, nuevaPos, null);
                 } else {
-                    anotarReaparicionAbsoluta(id, x, y, nuevaPos);
+                    // Es la primera vez que se anota este objeto o estaba
+                    // desaparecido
+                    // Miramos si su posicion esta ocupada
+                    if (this.desaparecidoRelativo.contains(id)) {
+                        if (!this.posicionIds.containsKey(claveNum)) { // no hay
+                                                                       // colision
+                            anotarReaparicionRelativa(id, x, y, nuevaPos);
+                        } else { // Hay colision
+                            throw new InternalError("COLISION");
+                        }
+
+                    }
+
+                    if (instant == 0) {
+                        // Posicion libre
+                        anotarMovimiento(id, claveNum, nuevaPos, null);
+                    } else {
+                        anotarReaparicionAbsoluta(id, x, y, nuevaPos);
+                    }
                 }
+
             }
-
         }
+        final Estructura estructura = new Estructura(null, null);
+        return this.punteros;
 
-        final Estructura estructura = new Estructura(this.snapshots, this.logs);
-        return estructura;
     }
 
-    private int procesarCambioInstante(final ConfiguracionHelper configuracion, final int instant) {
+    /**
+     * Analizar cambio instante.
+     *
+     * @param configuracion
+     *            the configuracion
+     * @param lastInstant
+     *            the last instant
+     * @param instant
+     *            the instant
+     * @param tempFile
+     * @return the int
+     * @throws IOException
+     */
+    private int analizarCambioInstante(final ConfiguracionHelper configuracion, final int lastInstant,
+            final int instant, final FileOutputStream tempFile) throws IOException {
+
+        int ultimoInstante = lastInstant;
+        if (instant != ultimoInstante) {
+            // Cambio de instante. Comprobamos si algun objeto ha
+            // desaparecido
+            if ((instant - ultimoInstante) > 1) {
+                // Hay instantes que no tienen ningun movimiento registrado
+                while (ultimoInstante < (instant - 1)) {
+                    ultimoInstante++;
+                    ultimoInstante = procesarCambioInstante(configuracion, ultimoInstante, tempFile);
+
+                }
+
+            }
+
+            ultimoInstante = procesarCambioInstante(configuracion, instant, tempFile);
+        }
+        return ultimoInstante;
+    }
+
+    /**
+     * Procesar cambio instante.
+     *
+     * @param configuracion
+     *            the configuracion
+     * @param instant
+     *            the instant
+     * @param tempFile
+     * @return the int
+     * @throws IOException
+     */
+    private int procesarCambioInstante(final ConfiguracionHelper configuracion, final int instant,
+            final FileOutputStream tempFile) throws IOException {
         int lastInstant;
         lastInstant = instant;
 
@@ -221,10 +320,18 @@ public class CreadorEstructura {
 
         creacionLogEnCambioInstante(configuracion, instant);
 
-        creacionSnapshotEnCambioInstante(configuracion, instant);
+        creacionSnapshotEnCambioInstante(configuracion, instant, tempFile);
         return lastInstant;
     }
 
+    /**
+     * Creacion log en cambio instante.
+     *
+     * @param configuracion
+     *            the configuracion
+     * @param instant
+     *            the instant
+     */
     private void creacionLogEnCambioInstante(final ConfiguracionHelper configuracion, final int instant) {
         if ((instant - 1) > 0) {
             final Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
@@ -237,17 +344,37 @@ public class CreadorEstructura {
                 objetoMovimientoMap.put(i, movimientoComprimido);
             }
             final Log log = new Log(objetoMovimientoMap);
-            this.logs.put(instant - 1, log);
+            this.logs.add(log);
             this.mapaDeLog.clear();
-            System.out.println("LOG: " + (instant - 1));
+            logger.debug("LOG: " + (instant - 1));
         }
 
     }
 
-    private void creacionSnapshotEnCambioInstante(final ConfiguracionHelper configuracion, final int instant) {
+    /**
+     * Creacion snapshot en cambio instante.
+     *
+     * @param configuracion
+     *            the configuracion
+     * @param instant
+     *            the instant
+     * @param tempFile
+     * @throws IOException
+     */
+    private void creacionSnapshotEnCambioInstante(final ConfiguracionHelper configuracion, final int instant,
+            final FileOutputStream tempFile) throws IOException {
         if (((instant - 1) % configuracion.getDistanciaEntreSnapshots()) == 0) {
-            // Generamos Snapshot
+            // Primero almacenamos el snapshot y los logs anteriores en el fichero comprimido
+            if ((instant - 1) != 0) {
+                this.punteros.add(this.puntero);
+                this.puntero = CompresorEstructuraHelper.comprimirBloqueSnapshotLog(this.snapshot, this.logs, tempFile,
+                        this.numeroBloques, configuracion.getS(), configuracion.getC(), this.puntero);
 
+                this.numeroBloques++;
+            }
+            this.logs.clear();
+
+            // Generamos Snapshot
             this.ultimaPosicionDesaparecidos.clear();
             this.desaparecidoRelativo.clear();
             // Punto de generacion de Snapshot
@@ -258,11 +385,24 @@ public class CreadorEstructura {
             System.out.println("NumBytes : " + tamanoBytes);
             System.out.println("Real     : " + bytes.length);
             k2Tree.equals(k2Tree);
-            this.snapshots.put(instant - 1, k2Tree);
+            this.snapshot = k2Tree;
             System.out.println("SNAPSHOT: " + (instant - 1));
+
         }
     }
 
+    /**
+     * Anotar reaparicion absoluta.
+     *
+     * @param id
+     *            the id
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     * @param nuevaPos
+     *            the nueva pos
+     */
     private void anotarReaparicionAbsoluta(final int id, final int x, final int y, final ObjetoMovil nuevaPos) {
         final PosicionKey claveNum = new PosicionKey(x, y);
         this.posicionIds.put(claveNum, nuevaPos);
@@ -276,13 +416,22 @@ public class CreadorEstructura {
         final List<Integer> word = this.encoder.encode(posicionNumero);
         word.add(x);
         word.add(y);
-        if (nuevaPos.getInstante() == 1739) {
-            System.out.println("A id: " + id + " word: " + word);
-        }
         this.mapaDeLog.put(id, word);
 
     }
 
+    /**
+     * Anotar reaparicion relativa.
+     *
+     * @param id
+     *            the id
+     * @param x
+     *            the x
+     * @param y
+     *            the y
+     * @param nuevaPos
+     *            the nueva pos
+     */
     private void anotarReaparicionRelativa(final int id, final int x, final int y, final ObjetoMovil nuevaPos) {
         final PosicionKey claveNum = new PosicionKey(x, y);
         this.posicionIds.put(claveNum, nuevaPos);
@@ -300,13 +449,22 @@ public class CreadorEstructura {
         numeroEspiral = ControladorHelper.unidimensionar(movimiento.getX(), movimiento.getY());
         posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
         word.addAll(this.encoder.encode(posicionNumero));
-        if (nuevaPos.getInstante() == 1739) {
-            System.out.println("R id: " + id + " word: " + word);
-        }
         this.mapaDeLog.put(id, word);
 
     }
 
+    /**
+     * Anotar movimiento.
+     *
+     * @param id
+     *            the id
+     * @param claveNum
+     *            the clave num
+     * @param nuevaPos
+     *            the nueva pos
+     * @param viejaPos
+     *            the vieja pos
+     */
     private void anotarMovimiento(final int id, final PosicionKey claveNum, final ObjetoMovil nuevaPos,
             final ObjetoMovil viejaPos) {
 
@@ -326,16 +484,7 @@ public class CreadorEstructura {
 
                 final List<Integer> word = this.encoder.encode(posicionNumero);
                 Collections.reverse(word);
-                if (this.encoder.decode(word) != posicionNumero) {
-                    System.out.println("Problema " + posicionNumero);
-                    this.encoder.encode(35);
 
-                    this.encoder.decode(Arrays.asList(11, 0));
-                }
-
-                if (nuevaPos.getInstante() == 1739) {
-                    System.out.println("id: " + id + " word: " + word);
-                }
                 this.mapaDeLog.put(id, word);
             }
 
@@ -347,7 +496,7 @@ public class CreadorEstructura {
 
     /**
      * Movimiento dentro limites.
-     * 
+     *
      * @param diferenciaX
      *            diferencia x
      * @param diferenciaY

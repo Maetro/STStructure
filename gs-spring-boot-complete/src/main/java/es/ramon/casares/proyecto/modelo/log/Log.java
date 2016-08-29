@@ -1,24 +1,50 @@
+/**
+ * Log.java 27-ago-2016
+ *
+ * Copyright 2016 RAMON CASARES.
+ * @author Ramon.Casares.Porto@gmail.com
+ */
 package es.ramon.casares.proyecto.modelo.log;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The Class Log.
+ */
 public class Log {
 
-	private Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
+    /** The objeto movimiento map. */
+    private Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
 
-	public Log(Map<Integer, MovimientoComprimido> objetoMovimientoMap) {
-		super();
-		this.objetoMovimientoMap = objetoMovimientoMap;
-	}
+    /**
+     * Instantiates a new log.
+     *
+     * @param objetoMovimientoMapP
+     *            the objeto movimiento map
+     */
+    public Log(final Map<Integer, MovimientoComprimido> objetoMovimientoMapP) {
+        super();
+        this.objetoMovimientoMap = objetoMovimientoMapP;
+    }
 
-	public Map<Integer, MovimientoComprimido> getObjetoMovimientoMap() {
-		return objetoMovimientoMap;
-	}
+    /**
+     * Gets the objeto movimiento map.
+     *
+     * @return the objeto movimiento map
+     */
+    public final Map<Integer, MovimientoComprimido> getObjetoMovimientoMap() {
+        return this.objetoMovimientoMap;
+    }
 
-	public void setObjetoMovimientoMap(Map<Integer, MovimientoComprimido> objetoMovimientoMap) {
-		this.objetoMovimientoMap = objetoMovimientoMap;
-	}
-	
-	
+    /**
+     * Establece objeto movimiento map.
+     *
+     * @param objetoMovimientoMap
+     *            the objeto movimiento map
+     */
+    public final void setObjetoMovimientoMap(final Map<Integer, MovimientoComprimido> objetoMovimientoMapP) {
+        this.objetoMovimientoMap = objetoMovimientoMapP;
+    }
+
 }

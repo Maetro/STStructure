@@ -6,13 +6,13 @@
  */
 package es.ramon.casares.proyecto.controlador;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
-import es.ramon.casares.proyecto.modelo.estructura.Estructura;
 import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
 import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
 import es.ramon.casares.proyecto.util.CompresorEstructuraHelper;
@@ -33,6 +32,9 @@ import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToS
  */
 @RestController
 public class MainController { // NO_UCD (test only)
+
+    /** The logger. */
+    private final Logger logger = LoggerFactory.getLogger(MainController.class);
 
     /** The Constant CICLOS_TEST. */
     private static final int CICLOS_TEST = 20000;
@@ -64,23 +66,52 @@ public class MainController { // NO_UCD (test only)
     public final String crearEstructura() throws ClassNotFoundException, FileNotFoundException, // NO_UCD (unused code)
             IOException, NumberFormatException, ImpossibleToSolveColisionException {
 
+        this.logger.info("Creando estructura");
+
         final int limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                 * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
 
         final Resource ficheroDataSet = this.resourceLoader.getResource("classpath:datafileSinColisiones");
 
+        this.logger.info("Analizando límites");
         final LimitesBean limites = ControladorHelper.analizadorDeLimites(ficheroDataSet.getFile());
 
+        this.logger.info("Creando Modelo estructura");
         final CreadorEstructura creador = new CreadorEstructura(limiteSuperior, limites.getLimiteMovimiento(),
                 limites.getNumeroObjetos());
 
         final Resource ficheroFrecuencias = this.resourceLoader.getResource("classpath:frecuencias");
 
         creador.inicializar(ficheroFrecuencias, this.configuracion);
-        final Estructura estructura = creador.crearEstructura(ficheroDataSet, this.configuracion);
+        final List<Integer> punteros = creador.crearEstructura(ficheroDataSet, this.configuracion);
+
+        final Resource ficherofrecuencias = this.resourceLoader.getResource("classpath:frecuencias");
+
+        final Resource ficheroCuerpo = this.resourceLoader.getResource("classpath:EstructuraTemporal");
 
         final ComprimirEstructuraParametersBean parametros = new ComprimirEstructuraParametersBean();
 
+        crearParametrosParaComprimir(limites, parametros);
+
+        this.logger.info("Escribiendo estructura comprimida en fichero");
+
+        CompresorEstructuraHelper.comprimirEstructura(ficherofrecuencias, ficheroCuerpo, punteros,
+                parametros);
+
+        this.logger.info("Todo correcto, función terminada");
+        return "DONE";
+    }
+
+    /**
+     * Crear parametros para comprimir.
+     *
+     * @param limites
+     *            the limites
+     * @param parametros
+     *            the parametros
+     */
+    private void crearParametrosParaComprimir(final LimitesBean limites,
+            final ComprimirEstructuraParametersBean parametros) {
         final int numeroEspiral = ControladorHelper.unidimensionar(limites.getLimiteMovimiento(),
                 -limites.getLimiteMovimiento());
 
@@ -90,12 +121,6 @@ public class MainController { // NO_UCD (test only)
         parametros.setParametroS(this.configuracion.getS());
         parametros.setSegundosPorInstante(this.configuracion.getSegundosEntreInstantes());
         parametros.setCodigoReaparicionAbsoluta(numeroEspiral);
-
-        final byte[] estructuraComprimida = CompresorEstructuraHelper.comprimirEstructura(estructura, parametros);
-
-        FileUtils.writeByteArrayToFile(new File("src/main/resources/estructuracomprimida"), estructuraComprimida);
-
-        return "DONE";
     }
 
     /**
@@ -120,10 +145,8 @@ public class MainController { // NO_UCD (test only)
 
         final Resource ficheroEstructura = this.resourceLoader.getResource("classpath:estructuraComprimida");
 
-        final byte[] estructuraComprimida = FileUtils.readFileToByteArray(ficheroEstructura.getFile());
-
-        CompresorEstructuraHelper.descomprimirEstructura(estructuraComprimida, this.configuracion.getS(),
-                this.configuracion.getC(), this.configuracion.getChunkSize());
+        CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura.getFile(),
+                this.configuracion.getChunkSize());
 
         return "DONE";
     }

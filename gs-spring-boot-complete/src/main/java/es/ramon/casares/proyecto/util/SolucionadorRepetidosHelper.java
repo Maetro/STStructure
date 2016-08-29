@@ -1,8 +1,8 @@
 /**
- * SolucionadorRepetidosHelper.java 08-ago-2016
+ * SolucionadorRepetidosHelper.java 27-ago-2016
  *
- * Copyright 2016 INDITEX.
- * Departamento de Sistemas
+ * Copyright 2016 RAMON CASARES.
+ * @author Ramon.Casares.Porto@gmail.com
  */
 package es.ramon.casares.proyecto.util;
 
@@ -13,26 +13,31 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 
-
-
 /**
  * The Class SolucionadorRepetidosHelper.
- * 
+ *
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 public class SolucionadorRepetidosHelper {
 
+    /** The logger. */
+    private static final Logger logger = LoggerFactory.getLogger(SolucionadorRepetidosHelper.class);
+
+    /** The datareader. */
     private RandomAccessFile datareader;
 
+    /** The mapa ids. */
     private final HashMap<Integer, ObjetoMovil> mapaIds = new HashMap<Integer, ObjetoMovil>();
 
     /**
      * Resolver repeticiones.
-     * 
+     *
      * @param ficheroNormalizado
      *            fichero normalizado
      * @throws NumberFormatException
@@ -43,7 +48,7 @@ public class SolucionadorRepetidosHelper {
     public void resolverRepeticiones(final Resource ficheroNormalizado) throws NumberFormatException, IOException {
         String currentLine;
 
-        final File tempFile = new File("src/main/resources/datafileSinRepetidos");
+        final File tempFile = new File("src/main/resources/ficheroSinRepetidos");
 
         int lastInstant = 0;
 
@@ -60,13 +65,16 @@ public class SolucionadorRepetidosHelper {
             final String[] result = currentLine.trim().split("\\s");
             if (result.length == 4) {
                 final int instant = Integer.valueOf(result[0]); // En segundos
-                final int id = Integer.valueOf(result[1]);
 
+                final int id = Integer.valueOf(result[1]);
                 final int x = Integer.valueOf(result[2]); // Longitud
                 final int y = Integer.valueOf(result[3]); // Latitud
-                final ObjetoMovil nuevaPos = new ObjetoMovil(id, instant, x, y);
 
+                final ObjetoMovil nuevaPos = new ObjetoMovil(id, instant, x, y);
                 if (instant != lastInstant) {
+                    if ((instant % 1000) == 0) {
+                        logger.info("Instante: " + instant);
+                    }
                     for (final ObjetoMovil objeto : this.mapaIds.values()) {
                         writer.write(objeto.getInstante() + " " + objeto.getObjetoId() + " " + objeto.getPosicionX() +
                                 " " + objeto.getPosicionY() + "\n");

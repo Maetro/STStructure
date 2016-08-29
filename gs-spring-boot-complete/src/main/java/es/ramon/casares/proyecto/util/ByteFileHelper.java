@@ -6,6 +6,9 @@
  */
 package es.ramon.casares.proyecto.util;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -44,4 +47,22 @@ public class ByteFileHelper {
         }
     }
 
+    /**
+     * Crear fichero si no existe.
+     *
+     * @param uri
+     *            the uri
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    public static FileOutputStream crearFicheroEscrituraSiNoExiste(final String uri) throws IOException {
+        final File tempFile = new File(uri);
+
+        // if file doesnt exists, then create it
+        if (!tempFile.exists()) {
+            tempFile.createNewFile();
+        }
+        final FileOutputStream writer = new FileOutputStream(tempFile);
+        return writer;
+    }
 }

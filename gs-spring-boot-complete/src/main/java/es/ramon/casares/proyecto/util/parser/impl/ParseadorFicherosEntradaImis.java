@@ -23,7 +23,7 @@ public class ParseadorFicherosEntradaImis implements ParseadorFicherosEntrada {
 
     /**
      * Instancia un nuevo parseador ficheros entrada imis.
-     * 
+     *
      * @param secondsBetweenInstants
      *            seconds between instants
      */
@@ -40,9 +40,11 @@ public class ParseadorFicherosEntradaImis implements ParseadorFicherosEntrada {
         final LineaEntradaParseada respuesta = new LineaEntradaParseada();
         final String[] parametros = lineaTexto.split(",");
         obtenerInstanteLinea(respuesta, parametros);
+        // final Integer instante = Integer.valueOf(parametros[0]);
         final Double longitud = Double.valueOf(parametros[1]);
         final Double latitud = Double.valueOf(parametros[2]);
         final Integer idObjeto = Integer.valueOf(parametros[3]);
+
         respuesta.setPosX(longitud);
         respuesta.setPosY(latitud);
         respuesta.setIdObjeto(idObjeto);
@@ -52,7 +54,7 @@ public class ParseadorFicherosEntradaImis implements ParseadorFicherosEntrada {
 
     /**
      * Obtener instante linea.
-     * 
+     *
      * @param respuesta
      *            respuesta
      * @param parametros

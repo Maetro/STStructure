@@ -24,6 +24,11 @@ C: 11
 
 chunkSize: 4
 
+logging:
+  level:
+    ROOT: INFO
+
+
 ---
 
 spring:

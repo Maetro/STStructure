@@ -1,69 +1,121 @@
+/**
+ * SCDenseCoder.java 27-ago-2016
+ *
+ * Copyright 2016 RAMON CASARES.
+ * @author Ramon.Casares.Porto@gmail.com
+ */
 package es.ramon.casares.proyecto.encoder;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The Class SCDenseCoder.
+ */
 public class SCDenseCoder {
 
-    private Integer S;
-    private Integer C;
+    /** The parametro s. */
+    private Integer parametroS;
 
-    public SCDenseCoder(final Integer s, final Integer c) {
+    /** The parametro c. */
+    private Integer parametroC;
+
+    /**
+     * Instantiates a new SC dense coder.
+     *
+     * @param parametroSp
+     *            the parametro sp
+     * @param parametroCp
+     *            the parametro cp
+     */
+    public SCDenseCoder(final Integer parametroSp, final Integer parametroCp) {
         super();
-        this.S = s;
-        this.C = c;
+        this.parametroS = parametroSp;
+        this.parametroC = parametroCp;
     }
 
-    public Integer getS() {
-        return this.S;
+    /**
+     * Gets the parametro s.
+     *
+     * @return the parametro s
+     */
+    public Integer getParametroS() {
+        return this.parametroS;
     }
 
-    public void setS(final Integer s) {
-        this.S = s;
+    /**
+     * Sets the parametro s.
+     *
+     * @param parametroS
+     *            the new parametro s
+     */
+    public void setParametroS(final Integer parametroS) {
+        this.parametroS = parametroS;
     }
 
-    public Integer getC() {
-        return this.C;
+    public Integer getParametroC() {
+        return this.parametroC;
     }
 
-    public void setC(final Integer c) {
-        this.C = c;
+    public void setParametroC(final Integer parametroC) {
+        this.parametroC = parametroC;
     }
 
-    public List<Integer> encode(final Integer i) {
+    /**
+     * Encode.
+     *
+     * @param i
+     *            the i
+     * @return the list
+     */
+    public final List<Integer> encode(final Integer i) {
         final List<Integer> word = new ArrayList<Integer>();
-        Integer pos = i % this.S;
+        Integer pos = i % this.parametroS;
         word.add(pos);
-        int x = (int) Math.floor((double) i / (double) this.S);
+        int x = (int) Math.floor((double) i / (double) this.parametroS);
         while (x > 0) {
             x = x - 1;
-            pos = (x % this.C) + this.S;
+            pos = (x % this.parametroC) + this.parametroS;
             word.add(pos);
-            x = (int) Math.floor((double) x / (double) this.C);
+            x = (int) Math.floor((double) x / (double) this.parametroC);
         }
 
         return word;
     }
 
-    public Integer decode(final List<Integer> codeword) {
+    /**
+     * Decode.
+     *
+     * @param codeword
+     *            the codeword
+     * @return the integer
+     */
+    public final Integer decode(final List<Integer> codeword) {
         int i = 0;
         int k = 0;
 
-        while (codeword.get(k) >= this.S) {
-            i = (i * this.C) + (codeword.get(k) - this.S);
+        while (codeword.get(k) >= this.parametroS) {
+            i = (i * this.parametroC) + (codeword.get(k) - this.parametroS);
             k++;
         }
-        i = (i * this.S) + codeword.get(k);
+        i = (i * this.parametroS) + codeword.get(k);
         i = i + base(k + 1);
         return i;
 
     }
 
-    public boolean wordComplete(final List<Integer> codeword) {
+    /**
+     * Word complete.
+     *
+     * @param codeword
+     *            the codeword
+     * @return true, if successful
+     */
+    public final boolean wordComplete(final List<Integer> codeword) {
 
         final int pos = codeword.size() - 1;
 
-        if (codeword.get(pos) >= this.S) {
+        if (codeword.get(pos) >= this.parametroS) {
             return false;
         } else {
             return true;
@@ -71,6 +123,13 @@ public class SCDenseCoder {
 
     }
 
+    /**
+     * Base.
+     *
+     * @param i
+     *            the i
+     * @return the integer
+     */
     // base[1]=0, base[2]=s, base[3]=s + sc, base[4]= s + sc+ sc2, base[5]= s + sc+ sc2 + sc3
     private Integer base(final int i) {
         int result = 0;
@@ -79,16 +138,19 @@ public class SCDenseCoder {
             result = 0;
             break;
         case 2:
-            result = this.S;
+            result = this.parametroS;
             break;
         case 3:
-            result = this.S + (this.S * this.C);
+            result = this.parametroS + (this.parametroS * this.parametroC);
             break;
         case 4:
-            result = this.S + (this.S * this.C) + (this.S * this.C * this.C);
+            result = this.parametroS + (this.parametroS * this.parametroC)
+                    + (this.parametroS * this.parametroC * this.parametroC);
             break;
         case 5:
-            result = this.S + (this.S * this.C) + (this.S * this.C * this.C) + (this.S * this.C * this.C * this.C);
+            result = this.parametroS + (this.parametroS * this.parametroC)
+                    + (this.parametroS * this.parametroC * this.parametroC)
+                    + (this.parametroS * this.parametroC * this.parametroC * this.parametroC);
             break;
         }
         return result;
