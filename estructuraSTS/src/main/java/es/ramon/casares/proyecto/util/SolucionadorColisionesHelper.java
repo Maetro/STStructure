@@ -22,7 +22,7 @@ import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
 
 /**
  * @author Ramon Casares
- *
+ * 
  *         Clase que resuelve las colisiones entre dos objetos que se encuentran en el mismo punto en el mismo instante
  *         Cuando el algoritmo detecta una colisión evalúa cual es el siguiente de los dos objetos que se moverá. De esa
  *         forma aparta el otro objeto desde el instante anterior a la colisión hasta que vuelve a la posición en el
@@ -46,6 +46,7 @@ public class SolucionadorColisionesHelper {
             ImpossibleToSolveColisionException {
         String currentLine;
         int numOfCollisions = 0;
+        boolean notificado = false;
         final File tempFile = new File("src/main/resources/datafileSinColisiones");
 
         // if file doesnt exists, then create it
@@ -60,9 +61,14 @@ public class SolucionadorColisionesHelper {
             final String[] result = currentLine.trim().split("\\s");
             if (result.length >= 3) {
                 final int instant = Integer.valueOf(result[0]); // En segundos
-                if ((instant % 1000) == 0) {
+
+                if (((instant % 1000) == 0) && notificado) {
                     logger.info("Instante: " + instant);
                     writer.flush();
+                    notificado = true;
+                }
+                if ((instant % 1000) == 1) {
+                    notificado = false;
                 }
                 final int id = Integer.valueOf(result[1]);
                 final int x = Integer.valueOf(result[2]); // Longitud
@@ -170,7 +176,7 @@ public class SolucionadorColisionesHelper {
 
     /**
      * Anotar posicion no ocupada.
-     *
+     * 
      * @param id
      *            id
      * @param claveNum

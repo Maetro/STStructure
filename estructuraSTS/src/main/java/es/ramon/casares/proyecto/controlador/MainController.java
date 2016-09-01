@@ -45,6 +45,9 @@ public class MainController { // NO_UCD (test only)
     @Autowired
     private ConfiguracionHelper configuracion;
 
+    @Autowired
+    private PreparadorDatos preparadorDatos;
+
     /**
      * Crear estructura.
      * 
@@ -63,6 +66,15 @@ public class MainController { // NO_UCD (test only)
     @RequestMapping("/")
     public final String crearEstructura() throws ClassNotFoundException, FileNotFoundException, // NO_UCD (unused code)
             IOException, NumberFormatException, ImpossibleToSolveColisionException {
+
+        System.out.println(this.configuracion.getChunkSize() + "-" +
+                this.configuracion.getDistanciaEntreSnapshots() + "-" +
+                this.configuracion.getSegundosEntreInstantes() + "-" +
+                this.configuracion.getMetrosPorCelda() + "-" +
+                this.configuracion.getS() + "-" +
+                this.configuracion.getC());
+
+        this.preparadorDatos.primerAnalisis();
 
         this.logger.info("Creando estructura");
 
@@ -94,7 +106,15 @@ public class MainController { // NO_UCD (test only)
         CompresorEstructuraHelper.comprimirEstructura(ficheroFrecuencias, ficheroCuerpo, punteros,
                 parametros);
 
-        this.logger.info("Todo correcto, función terminada");
+        this.logger.info("Todo correcto, función terminada: S: " + this.configuracion.getS() + ", C: " +
+                this.configuracion.getC());
+
+        System.out.println(this.configuracion.getChunkSize() + "-" +
+                this.configuracion.getDistanciaEntreSnapshots() + "-" +
+                this.configuracion.getSegundosEntreInstantes() + "-" +
+                this.configuracion.getMetrosPorCelda() + "-" +
+                this.configuracion.getS() + "-" +
+                this.configuracion.getC());
         return "DONE";
     }
 
@@ -192,12 +212,19 @@ public class MainController { // NO_UCD (test only)
     public final String test() {
 
         final Test tests = new Test();
-
-        // tests.probarGeneracionK2Tree(this.configuracion);
-        tests.probarGeneracionK2TreeyBusqueda(this.configuracion);
+        final File frecuencias = new File("src/main/resources/frecuenciasTest");
+        try {
+            tests.probarGeneracionK2TreeyLogs(this.configuracion, frecuencias);
+        } catch (final NumberFormatException e) {
+            // TODO Auto-generated catch block
+            throw new InternalError(e.getMessage());
+        } catch (final IOException e) {
+            // TODO Auto-generated catch block
+            throw new InternalError(e.getMessage());
+        }
+        // tests.probarGeneracionK2TreeyBusqueda(this.configuracion);
         // Test.probarLocalizacionObjetosEnK2Tree();
 
         return "DONE";
     }
-
 }

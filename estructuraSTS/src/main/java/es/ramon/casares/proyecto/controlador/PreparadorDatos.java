@@ -14,12 +14,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -78,56 +78,56 @@ public class PreparadorDatos {
      * @throws NumberFormatException
      */
     @RequestMapping("/analizar")
-    private String primerAnalisis() throws NumberFormatException, ImpossibleToSolveColisionException {
+    public String primerAnalisis() throws NumberFormatException, ImpossibleToSolveColisionException {
 
         // Inicializamos el lector del fichero
         final InputStream is;
         try {
-            is = new FileInputStream("src/main/resources/imis.txt");
+            is = new FileInputStream("src/main/resources/imis1day");
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            final String line;
+            String line;
             final ParseadorFicherosEntrada parseador = new ParseadorFicherosEntradaImis(
                     this.configuracion.getSegundosEntreInstantes());
-            //
-            // Double menorLatitud = new Double(Integer.MAX_VALUE);
-            // Double mayorLatitud = 0D;
-            // Double menorLongitud = new Double(Integer.MAX_VALUE);
-            // Double mayorLongitud = 0D;
-            // final Set<Integer> idsObjetos = new HashSet<Integer>();
-            // long numeroLineas = 0L;
-            // int ultimoInstante = 0;
-            // line = br.readLine();
-            // while ((line = br.readLine()) != null) {
-            // final LineaEntradaParseada linea = parseador.parsearLineaEntrada(line);
-            //
-            // if (linea.getPosX() > mayorLongitud) {
-            // mayorLongitud = linea.getPosX();
-            // }
-            // if (linea.getPosY() > mayorLatitud) {
-            // mayorLatitud = linea.getPosY();
-            // }
-            // if (linea.getPosX() < menorLongitud) {
-            // menorLongitud = linea.getPosX();
-            // }
-            // if (linea.getPosY() < menorLatitud) {
-            // menorLatitud = linea.getPosY();
-            // }
-            // idsObjetos.add(linea.getIdObjeto());
-            // ultimoInstante = linea.getInstante();
-            // numeroLineas++;
-            // }
-            // logger.info("Analizando limites");
-            // analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
-            // ultimoInstante);
+
+            Double menorLatitud = new Double(Integer.MAX_VALUE);
+            Double mayorLatitud = 0D;
+            Double menorLongitud = new Double(Integer.MAX_VALUE);
+            Double mayorLongitud = 0D;
+            final Set<Integer> idsObjetos = new HashSet<Integer>();
+            long numeroLineas = 0L;
+            int ultimoInstante = 0;
+            line = br.readLine();
+            while ((line = br.readLine()) != null) {
+                final LineaEntradaParseada linea = parseador.parsearLineaEntrada(line);
+
+                if (linea.getPosX() > mayorLongitud) {
+                    mayorLongitud = linea.getPosX();
+                }
+                if (linea.getPosY() > mayorLatitud) {
+                    mayorLatitud = linea.getPosY();
+                }
+                if (linea.getPosX() < menorLongitud) {
+                    menorLongitud = linea.getPosX();
+                }
+                if (linea.getPosY() < menorLatitud) {
+                    menorLatitud = linea.getPosY();
+                }
+                idsObjetos.add(linea.getIdObjeto());
+                ultimoInstante = linea.getInstante();
+                numeroLineas++;
+            }
+            logger.info("Analizando limites");
+            analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
+                    ultimoInstante);
             this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                     * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
             logger.info("Velocidad máxima (cuadrados/instante): " + this.limiteSuperior);
             br.close();
             is.close();
-            // logger.info("Crear fichero normalizado");
-            // crearFicheroNormalizado();
-            final File ficheroNormalizado = new File("src/main/resources/imis.txt");
+            logger.info("Crear fichero normalizado");
+            crearFicheroNormalizado();
+            final File ficheroNormalizado = new File("src/main/resources/ficheroNormalizado");
 
             // Si un objeto produce varias notificaciones entre instantes habra datos de mas
             final SolucionadorRepetidosHelper solucionadorRepetidos = new SolucionadorRepetidosHelper();
@@ -189,7 +189,6 @@ public class PreparadorDatos {
      * Crear fichero normalizado.
      */
     private void crearFicheroNormalizado() {
-        final Resource ficheroEntrada = this.resourceLoader.getResource("src/main/resources/imis.txt");
 
         // Inicializamos el lector del fichero
         InputStream is;
@@ -206,7 +205,7 @@ public class PreparadorDatos {
             final FileWriter fw = new FileWriter(file);
             final BufferedWriter bw = new BufferedWriter(fw);
 
-            is = ficheroEntrada.getInputStream();
+            is = new FileInputStream("src/main/resources/imis1day");
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(is));
             String line;

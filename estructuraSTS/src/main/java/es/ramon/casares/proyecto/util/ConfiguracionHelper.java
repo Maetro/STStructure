@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * The Class ConfiguracionHelper.
- *
+ * 
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 @Configuration
@@ -64,7 +64,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the numbers.
-     *
+     * 
      * @return the numbers
      */
     public List<Integer> getNumbers() {
@@ -73,7 +73,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the numbers.
-     *
+     * 
      * @param numbers
      *            the new numbers
      */
@@ -83,7 +83,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the servers.
-     *
+     * 
      * @return the servers
      */
     public List<String> getServers() {
@@ -92,7 +92,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the servers.
-     *
+     * 
      * @param servers
      *            the new servers
      */
@@ -102,7 +102,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the name.
-     *
+     * 
      * @return the name
      */
     public String getName() {
@@ -111,7 +111,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the name.
-     *
+     * 
      * @param name
      *            the new name
      */
@@ -121,7 +121,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the env.
-     *
+     * 
      * @return the env
      */
     public String getEnv() {
@@ -130,7 +130,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the env.
-     *
+     * 
      * @param env
      *            the new env
      */
@@ -140,7 +140,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the minimum square.
-     *
+     * 
      * @return the minimum square
      */
     public Integer getMinimumSquare() {
@@ -149,7 +149,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the minimum square.
-     *
+     * 
      * @param minimumSquare
      *            the new minimum square
      */
@@ -159,7 +159,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the distancia entre snapshots.
-     *
+     * 
      * @return the distancia entre snapshots
      */
     public Integer getDistanciaEntreSnapshots() {
@@ -168,7 +168,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the distancia entre snapshots.
-     *
+     * 
      * @param distanciaEntreSnapshots
      *            the new distancia entre snapshots
      */
@@ -178,7 +178,7 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the limites.
-     *
+     * 
      * @return the limites
      */
     public Integer getLimites() {
@@ -187,7 +187,7 @@ public class ConfiguracionHelper {
 
     /**
      * Sets the limites.
-     *
+     * 
      * @param limites
      *            the new limites
      */
@@ -197,7 +197,7 @@ public class ConfiguracionHelper {
 
     /**
      * Obtiene segundos entre instantes.
-     *
+     * 
      * @return segundos entre instantes
      */
     public Integer getSegundosEntreInstantes() {
@@ -206,7 +206,7 @@ public class ConfiguracionHelper {
 
     /**
      * Establece segundos entre instantes.
-     *
+     * 
      * @param segundosEntreInstantes
      *            nuevo segundos entre instantes
      */
@@ -216,7 +216,7 @@ public class ConfiguracionHelper {
 
     /**
      * Obtiene metros por celda.
-     *
+     * 
      * @return metros por celda
      */
     public Integer getMetrosPorCelda() {
@@ -225,7 +225,7 @@ public class ConfiguracionHelper {
 
     /**
      * Establece metros por celda.
-     *
+     * 
      * @param metrosPorCelda
      *            nuevo metros por celda
      */
@@ -235,7 +235,7 @@ public class ConfiguracionHelper {
 
     /**
      * Obtiene velocidad maxima.
-     *
+     * 
      * @return velocidad maxima
      */
     public Double getVelocidadMaxima() {
@@ -244,7 +244,7 @@ public class ConfiguracionHelper {
 
     /**
      * Establece velocidad maxima.
-     *
+     * 
      * @param velocidadMaxima
      *            nuevo velocidad maxima
      */
@@ -254,7 +254,7 @@ public class ConfiguracionHelper {
 
     /**
      * Obtiene instantes hasta desaparicion.
-     *
+     * 
      * @return instantes hasta desaparicion
      */
     public int getInstantesHastaDesaparicion() {
@@ -263,7 +263,7 @@ public class ConfiguracionHelper {
 
     /**
      * Establece instantes hasta desaparicion.
-     *
+     * 
      * @param instantesHastaDesaparicion
      *            nuevo instantes hasta desaparicion
      */
@@ -289,12 +289,22 @@ public class ConfiguracionHelper {
 
     /**
      * Gets the chunk size.
-     *
+     * 
      * @return the chunk size
      */
     public int getChunkSize() {
 
         return this.chunkSize;
+    }
+
+    /**
+     * Establece chunk size.
+     * 
+     * @param chunkSize
+     *            nuevo chunk size
+     */
+    public void setChunkSize(final int chunkSize) {
+        this.chunkSize = chunkSize;
     }
 
 }

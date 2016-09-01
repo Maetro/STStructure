@@ -22,7 +22,7 @@ public class SCDenseCoder {
 
     /**
      * Instantiates a new SC dense coder.
-     *
+     * 
      * @param parametroSp
      *            the parametro sp
      * @param parametroCp
@@ -36,7 +36,7 @@ public class SCDenseCoder {
 
     /**
      * Gets the parametro s.
-     *
+     * 
      * @return the parametro s
      */
     public Integer getParametroS() {
@@ -45,7 +45,7 @@ public class SCDenseCoder {
 
     /**
      * Sets the parametro s.
-     *
+     * 
      * @param parametroS
      *            the new parametro s
      */
@@ -63,7 +63,7 @@ public class SCDenseCoder {
 
     /**
      * Encode.
-     *
+     * 
      * @param i
      *            the i
      * @return the list
@@ -79,13 +79,12 @@ public class SCDenseCoder {
             word.add(pos);
             x = (int) Math.floor((double) x / (double) this.parametroC);
         }
-
         return word;
     }
 
     /**
      * Decode.
-     *
+     * 
      * @param codeword
      *            the codeword
      * @return the integer
@@ -106,7 +105,7 @@ public class SCDenseCoder {
 
     /**
      * Word complete.
-     *
+     * 
      * @param codeword
      *            the codeword
      * @return true, if successful
@@ -125,7 +124,7 @@ public class SCDenseCoder {
 
     /**
      * Base.
-     *
+     * 
      * @param i
      *            the i
      * @return the integer

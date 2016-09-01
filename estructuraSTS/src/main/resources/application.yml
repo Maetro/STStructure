@@ -1,11 +1,3 @@
-name: develname
-env: develYML
-servers: 
-  - develserver1
-  - develserver2
-numbers:
-  - 1
-  - 6
 minimumsquare: 4
 distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
@@ -19,8 +11,8 @@ limites: 16000
 minimumSquare: 4
 
 # SC Dense Codes
-S: 5
-C: 11
+S: 8
+C: 8
 
 chunkSize: 4
 
@@ -28,57 +20,3 @@ logging:
   level:
     ROOT: INFO
 
-
----
-
-spring:
- profiles: development
-name: develname
-env: develYML
-servers: 
-  - develserver1
-  - develserver2
-numbers:
-  - 1
-  - 6
-minimumsquare: 4
-distanciaEntreSnapshots: 30
-segundosEntreInstantes: 30
-instantesHastaDesaparicion: 7
-metrosPorCelda: 50
-
-#En metros segundo
-velocidadMaxima: 33.33 
-
-limites: 10000
-minimumSquare: 4
-
-# SC Dense Codes
-S: 5
-C: 11
-  
----
-spring:
- profiles: production
-name: prodname
-env: prodYML
-servers: 
-  - prodserver1
-  - prodserver2
-numbers:
-  - 1
-  - 6
-minimumsquare: 4
-distanciaEntreSnapshots: 20
-segundosEntreInstantes: 30
-metrosPorCelda: 50
-
-#En metros segundo
-velocidadMaxima: 33.33 
-
-limites: 10000
-minimumSquare: 4
-
-# SC Dense Codes
-S: 5
-C: 11
