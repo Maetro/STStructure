@@ -10,7 +10,7 @@ minimumsquare: 4
 distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
 instantesHastaDesaparicion: 7
-metrosPorCelda: 30
+metrosPorCelda: 50
 
 #En metros segundo
 velocidadMaxima: 33.33 
@@ -45,7 +45,7 @@ minimumsquare: 4
 distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
 instantesHastaDesaparicion: 7
-metrosPorCelda: 30
+metrosPorCelda: 50
 
 #En metros segundo
 velocidadMaxima: 33.33 
@@ -71,7 +71,7 @@ numbers:
 minimumsquare: 4
 distanciaEntreSnapshots: 20
 segundosEntreInstantes: 30
-metrosPorCelda: 30
+metrosPorCelda: 50
 
 #En metros segundo
 velocidadMaxima: 33.33 

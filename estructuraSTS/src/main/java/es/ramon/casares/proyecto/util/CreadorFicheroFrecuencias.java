@@ -18,7 +18,6 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.log.Movimiento;
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
@@ -79,7 +78,7 @@ public class CreadorFicheroFrecuencias {
         }
     }
 
-    public void crearFicheroFrecuencias(final ConfiguracionHelper configuracion, final Resource fichero)
+    public void crearFicheroFrecuencias(final ConfiguracionHelper configuracion, final File ficheroSinColisiones)
             throws NumberFormatException, IOException, ImpossibleToSolveColisionException {
         String currentLine;
 
@@ -93,7 +92,7 @@ public class CreadorFicheroFrecuencias {
 
         final BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
         int lastInstant = 0;
-        this.datareader = new RandomAccessFile(fichero.getFile(), "r");
+        this.datareader = new RandomAccessFile(ficheroSinColisiones, "r");
 
         while ((currentLine = this.datareader.readLine()) != null) {
             final String[] result = currentLine.trim().split("\\s");

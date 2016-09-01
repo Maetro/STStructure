@@ -6,8 +6,8 @@
  */
 package es.ramon.casares.proyecto.modelo.matrix;
 
-import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 import no.uib.cipr.matrix.sparse.LinkedSparseMatrix;
+import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 
 /**
  * The Class MatrixOfPositions.
@@ -23,13 +23,8 @@ public class MatrixOfPositions {
      * Instantiates a new matrix of positions.
      */
     public MatrixOfPositions(final int limit, final int minimumsquare) {
-        int i = 1;
-        while (Math.pow(2, i) < limit) {
-            i = i + 2;
-        }
-        final Integer limite = (int) Math.pow(2, i);
-        this.matriz = new LinkedSparseMatrix(limite, limite);
-        this.numCeldas = limite;
+        this.matriz = new LinkedSparseMatrix(limit, limit);
+        this.numCeldas = limit;
     }
 
     /**

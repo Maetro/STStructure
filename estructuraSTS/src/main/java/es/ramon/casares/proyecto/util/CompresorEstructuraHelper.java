@@ -15,14 +15,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.estructura.Estructura;
 import es.ramon.casares.proyecto.modelo.log.Log;
@@ -34,7 +35,7 @@ import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
 
 /**
  * The Class CompresorEstructuraHelper.
- *
+ * 
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 public final class CompresorEstructuraHelper {
@@ -52,9 +53,9 @@ public final class CompresorEstructuraHelper {
      * bytes indicados. A Continuacion iran los Logs uno tras otro seguidos. Para que funcione necesitamos indicar el
      * numero de objetos. Por lo que antes de empezar a escribir los Logs y después de los Snapshots escribiremos el
      * numero de objetos que contiene la estructura.
-     *
+     * 
      * @param parametros
-     *
+     * 
      * @param estructura
      *            estructura
      * @param parametros
@@ -63,12 +64,12 @@ public final class CompresorEstructuraHelper {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static void comprimirEstructura(final Resource ficherofrecuencias, final Resource ficheroCuerpo,
+    public static void comprimirEstructura(final File ficheroFrecuencias, final File ficheroCuerpo,
             final List<Integer> punteros, final ComprimirEstructuraParametersBean parametros)
             throws FileNotFoundException, IOException {
         int puntero = 0;
 
-        final File fileFinal = new File("src/main/resources/estructuraComprimida");
+        final File fileFinal = new File("src/main/resources/estructuracomprimida");
 
         // if file doesnt exists, then create it
         if (!fileFinal.exists()) {
@@ -77,7 +78,7 @@ public final class CompresorEstructuraHelper {
 
         final List<Byte> cabecera = new ArrayList<Byte>();
 
-        final RandomAccessFile datareader = new RandomAccessFile(ficherofrecuencias.getFile(), "r");
+        final RandomAccessFile datareader = new RandomAccessFile(ficheroFrecuencias, "r");
 
         final List<Byte> movimientosPorFrecuencia = new ArrayList<Byte>();
         String currentLine;
@@ -93,21 +94,22 @@ public final class CompresorEstructuraHelper {
         puntero += cabecera.size();
         FileUtils.writeByteArrayToFile(fileFinal, adaptListaBytesToArray(cabecera));
 
-        InputStream in = new FileInputStream(ficherofrecuencias.getFile());
+        InputStream in = new FileInputStream(ficheroFrecuencias);
 
         FileUtils.writeByteArrayToFile(fileFinal, adaptListaBytesToArray(movimientosPorFrecuencia), true);
+        puntero += punteros.size() * 4;
 
-        appendFileToFile(fileFinal, in);
+        in.close();
         final List<Byte> punterosBytes = new ArrayList<Byte>();
         for (final Integer punteroSnapshot : punteros) {
             ByteFileHelper.anadirEnteroAListaBytes(punterosBytes, punteroSnapshot + puntero);
         }
 
         FileUtils.writeByteArrayToFile(fileFinal, adaptListaBytesToArray(punterosBytes), true);
-        in = new FileInputStream(ficheroCuerpo.getFile());
+        in = new FileInputStream(ficheroCuerpo);
 
         appendFileToFile(fileFinal, in);
-
+        in.close();
     }
 
     public static void appendFileToFile(final File file, final InputStream in)
@@ -124,9 +126,9 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Crear cabeceras estructura comprimida.
-     *
+     * 
      * @param punteros
-     *
+     * 
      * @param estructura
      *            the estructura
      * @param parametros
@@ -145,11 +147,12 @@ public final class CompresorEstructuraHelper {
         ByteFileHelper.anadirEnteroAListaBytes(cabecera, parametros.getParametroC());
         ByteFileHelper.anadirEnteroAListaBytes(cabecera, parametros.getCodigoReaparicionAbsoluta());
         ByteFileHelper.anadirEnteroAListaBytes(cabecera, bytesFicheroFrecuencias);
+        ByteFileHelper.anadirEnteroAListaBytes(cabecera, parametros.getLimiteCuadrados());
     }
 
     /**
      * Adapt lista bytes to array.
-     *
+     * 
      * @param cabecera
      *            the cabecera
      * @return the byte[]
@@ -189,7 +192,7 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Descomprimir estructura.
-     *
+     * 
      * @param estructuraComprimida
      *            the estructura comprimida
      * @param parametroS
@@ -199,7 +202,8 @@ public final class CompresorEstructuraHelper {
      * @return the estructura
      * @throws IOException
      */
-    public static Estructura descomprimirEstructura(final File estructuraComprimida, final int chunkSize)
+    public static Estructura descomprimirEstructura(final File estructuraComprimida, final int chunkSize,
+            final int numSnapshot, final int numLogs)
             throws IOException {
         final long posicion = 0;
         final RandomAccessFile estructura = new RandomAccessFile(estructuraComprimida, "r");
@@ -213,41 +217,37 @@ public final class CompresorEstructuraHelper {
         final int parametroC = estructura.readInt();
         final int codigoReaparicionAbsoluta = estructura.readInt();
         final int bytesFrecuencias = estructura.readInt();
+        final int limiteCuadrados = estructura.readInt();
         final ComprimirEstructuraParametersBean cabecera = new ComprimirEstructuraParametersBean();
         cabecera.setSeparacionSnapshots(separacionSnapshots);
 
-        // byte[] slice = Arrays.copyOfRange(estructuraComprimida, posicion, posicion + chunkSize);
-        //
-        // posicion = posicion + chunkSize;
-        //
-        // final int numSnapshots = ByteBuffer.wrap(slice).getInt();
-        //
-        // slice = Arrays.copyOfRange(estructuraComprimida, posicion, posicion + chunkSize);
-        //
-        // posicion = posicion + chunkSize;
-        //
-        // final int separacionSnapshots = ByteBuffer.wrap(slice).getInt();
-        //
-        // System.out.println("NUM : " + numSnapshots + " SEP: " + separacionSnapshots);
-        //
-        // final Map<Integer, Snapshot> snapshots = new HashMap<Integer, Snapshot>();
-        //
-        // int posicionFinal = K2TreeHelper.descomprimirSnapshots(estructuraComprimida, snapshots, numSnapshots,
-        // separacionSnapshots);
-        //
-        // slice = Arrays.copyOfRange(estructuraComprimida, posicionFinal, posicionFinal + chunkSize);
-        //
-        // posicionFinal = posicionFinal + chunkSize;
-        //
-        // final int numObjetos = ByteBuffer.wrap(slice).getInt();
-        //
-        // System.out.println("OBJETOS : " + numObjetos);
-        //
-        // final Map<Integer, Log> logs = new HashMap<Integer, Log>();
-        //
-        // LogHelper.descomprimirLogs(estructuraComprimida, logs, numObjetos, posicionFinal, parametroS, parametroC);
-        //
-        final Estructura resultado = new Estructura(null, null);
+        // Lista de frecuencias
+        final int numeroMovimientos = bytesFrecuencias / 4;
+        final List<Integer> movimientosPorFrecuencia = new ArrayList<Integer>();
+        for (int posMovimiento = 0; posMovimiento < numeroMovimientos; posMovimiento++) {
+            movimientosPorFrecuencia.add(estructura.readInt());
+        }
+
+        // Punteros a Snapshots
+        final List<Integer> punteros = new ArrayList<Integer>();
+        for (int punteroNum = 0; punteroNum < numeroSnapshots; punteroNum++) {
+            punteros.add(estructura.readInt());
+        }
+
+        estructura.seek(punteros.get(numSnapshot));
+
+        final K2Tree snapshot = K2TreeHelper.descomprimirSnapshot(estructura);
+        final Map<Integer, Snapshot> snapshots = new HashMap<Integer, Snapshot>();
+
+        snapshots.put(0, snapshot);
+
+        final Map<Integer, Log> logs = new HashMap<Integer, Log>();
+
+        for (int i = 0; i < numLogs; i++) {
+            LogHelper.descomprimirLog(estructura, logs, numeroObjetos, parametroS, parametroC, i);
+        }
+
+        final Estructura resultado = new Estructura(snapshots, logs, limiteCuadrados);
         return resultado;
 
     }

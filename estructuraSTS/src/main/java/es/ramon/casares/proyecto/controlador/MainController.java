@@ -6,22 +6,24 @@
  */
 package es.ramon.casares.proyecto.controlador;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import es.ramon.casares.proyecto.encoder.SCDenseCoder;
+import es.ramon.casares.proyecto.Test;
+import es.ramon.casares.proyecto.modelo.estructura.Estructura;
 import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
 import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
+import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
+import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
 import es.ramon.casares.proyecto.util.CompresorEstructuraHelper;
 import es.ramon.casares.proyecto.util.ConfiguracionHelper;
 import es.ramon.casares.proyecto.util.ControladorHelper;
@@ -43,13 +45,9 @@ public class MainController { // NO_UCD (test only)
     @Autowired
     private ConfiguracionHelper configuracion;
 
-    /** The resource loader. */
-    @Autowired
-    private ResourceLoader resourceLoader;
-
     /**
      * Crear estructura.
-     *
+     * 
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -71,23 +69,21 @@ public class MainController { // NO_UCD (test only)
         final int limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                 * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
 
-        final Resource ficheroDataSet = this.resourceLoader.getResource("classpath:datafileSinColisiones");
+        final File ficheroDataSet = new File("src/main/resources/datafileSinColisiones");
 
         this.logger.info("Analizando límites");
-        final LimitesBean limites = ControladorHelper.analizadorDeLimites(ficheroDataSet.getFile());
+        final LimitesBean limites = ControladorHelper.analizadorDeLimites(ficheroDataSet);
 
         this.logger.info("Creando Modelo estructura");
-        final CreadorEstructura creador = new CreadorEstructura(limiteSuperior, limites.getLimiteMovimiento(),
+        final CreadorEstructura creador = new CreadorEstructura(limiteSuperior, limites.getLimiteCuadrado(),
                 limites.getNumeroObjetos());
 
-        final Resource ficheroFrecuencias = this.resourceLoader.getResource("classpath:frecuencias");
+        final File ficheroFrecuencias = new File("src/main/resources/frecuencias");
 
         creador.inicializar(ficheroFrecuencias, this.configuracion);
         final List<Integer> punteros = creador.crearEstructura(ficheroDataSet, this.configuracion);
 
-        final Resource ficherofrecuencias = this.resourceLoader.getResource("classpath:frecuencias");
-
-        final Resource ficheroCuerpo = this.resourceLoader.getResource("classpath:EstructuraTemporal");
+        final File ficheroCuerpo = new File("src/main/resources/EstructuraTemporal");
 
         final ComprimirEstructuraParametersBean parametros = new ComprimirEstructuraParametersBean();
 
@@ -95,7 +91,7 @@ public class MainController { // NO_UCD (test only)
 
         this.logger.info("Escribiendo estructura comprimida en fichero");
 
-        CompresorEstructuraHelper.comprimirEstructura(ficherofrecuencias, ficheroCuerpo, punteros,
+        CompresorEstructuraHelper.comprimirEstructura(ficheroFrecuencias, ficheroCuerpo, punteros,
                 parametros);
 
         this.logger.info("Todo correcto, función terminada");
@@ -104,7 +100,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Crear parametros para comprimir.
-     *
+     * 
      * @param limites
      *            the limites
      * @param parametros
@@ -112,11 +108,16 @@ public class MainController { // NO_UCD (test only)
      */
     private void crearParametrosParaComprimir(final LimitesBean limites,
             final ComprimirEstructuraParametersBean parametros) {
-        final int numeroEspiral = ControladorHelper.unidimensionar(limites.getLimiteMovimiento(),
-                -limites.getLimiteMovimiento());
+
+        final int limite = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
+                * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
+
+        final int numeroEspiral = ControladorHelper.unidimensionar(limite,
+                -limite);
 
         parametros.setSeparacionSnapshots(this.configuracion.getDistanciaEntreSnapshots());
         parametros.setNumeroObjetos(limites.getNumeroObjetos());
+        parametros.setLimiteCuadrados(limites.getLimiteCuadrado());
         parametros.setParametroC(this.configuracion.getC());
         parametros.setParametroS(this.configuracion.getS());
         parametros.setSegundosPorInstante(this.configuracion.getSegundosEntreInstantes());
@@ -125,7 +126,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Descomprimir estructura.
-     *
+     * 
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -140,37 +141,63 @@ public class MainController { // NO_UCD (test only)
      */
     @RequestMapping("/descomprimir")
     public final String descomprimirEstructura() throws ClassNotFoundException, FileNotFoundException, // NO_UCD (unused
+                                                                                                       // // Code) //
                                                                                                        // code)
             IOException, NumberFormatException, ImpossibleToSolveColisionException {
 
-        final Resource ficheroEstructura = this.resourceLoader.getResource("classpath:estructuraComprimida");
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
 
-        CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura.getFile(),
-                this.configuracion.getChunkSize());
+        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
+                this.configuracion.getChunkSize(), 0, 30);
+
+        K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0), 133,
+                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
 
         return "DONE";
     }
 
+    @RequestMapping("/resolver")
+    public final String resolverConsultaTimeSlice(@RequestParam(value = "instant") final int instant,
+            @RequestParam(value = "idObjeto") final int idObjeto) throws IOException {
+        // 2659 1110 11897 22982
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
+
+        final int numLogs = instant % this.configuracion.getDistanciaEntreSnapshots();
+
+        final int numSnapshot = instant / this.configuracion.getDistanciaEntreSnapshots();
+
+        Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
+                this.configuracion.getChunkSize(), 0, 0);
+
+        K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0), 133,
+                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
+
+        estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
+                this.configuracion.getChunkSize(), numSnapshot, numLogs);
+
+        System.out.println(K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
+                idObjeto,
+                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados())));
+
+        return "DONE";
+
+    }
+
     /**
      * Test.
-     *
+     * 
      * @return the string
      */
     @RequestMapping("/test")
     public final String test() {
 
-        final SCDenseCoder encoder = new SCDenseCoder(this.configuracion.getS(), this.configuracion.getC());
+        final Test tests = new Test();
 
-        for (int i = 0; i < CICLOS_TEST; i++) {
-            final List<Integer> list = encoder.encode(i);
-            Collections.reverse(list);
-            System.out.println("(" + i + ")" + list + " - " + encoder.decode(list));
-
-            if (i != encoder.decode(list)) {
-                System.out.println("FALLO");
-            }
-        }
+        // tests.probarGeneracionK2Tree(this.configuracion);
+        tests.probarGeneracionK2TreeyBusqueda(this.configuracion);
+        // Test.probarLocalizacionObjetosEnK2Tree();
 
         return "DONE";
     }
+
 }

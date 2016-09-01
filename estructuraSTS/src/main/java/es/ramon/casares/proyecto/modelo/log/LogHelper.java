@@ -6,6 +6,8 @@
  */
 package es.ramon.casares.proyecto.modelo.log;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
 
@@ -21,6 +25,9 @@ import es.ramon.casares.proyecto.encoder.SCDenseCoder;
  * The Class LogHelper.
  */
 public class LogHelper {
+
+    /** The logger. */
+    private static final Logger logger = LoggerFactory.getLogger(LogHelper.class);
 
     private static final Integer POSICION_REAPARICION_RELATIVA = 3;
     private static final Integer POSICION_REAPARICION_ABSOLUTA = 1;
@@ -195,181 +202,156 @@ public class LogHelper {
         return b1;
     }
 
-    /**
-     * Descomprimir logs.
-     *
-     * @param estructuraComprimida
-     *            the estructura comprimida
-     * @param logs
-     *            the logs
-     * @param numObjetos
-     *            the num objetos
-     * @param pos
-     *            the pos
-     * @param S
-     *            the s
-     * @param C
-     *            the c
-     */
-    public static void descomprimirLogs(final byte[] estructuraComprimida, final Map<Integer, Log> logs,
-            final int numObjetos,
-            final int pos, final int S, final int C) {
+    public static void descomprimirLog(final RandomAccessFile estructura, final Map<Integer, Log> logs,
+            final int numeroObjetos, final int parametroS,
+            final int parametroC, final int lognumber) throws IOException {
+        final SCDenseCoder encoder = new SCDenseCoder(parametroS, parametroC);
+        LogPositionBean datos = new LogPositionBean(0, true, 0, null);
 
-        final SCDenseCoder encoder = new SCDenseCoder(S, C);
-        LogPositionBean datos = new LogPositionBean(0, true, pos, null);
-        byte[] slice;
         int instant = 1;
 
-        while (datos.getPos() < estructuraComprimida.length) {
-            datos.setPart2(0);
-            datos.setUsado(true);
-            datos.setWord(null);
-            System.out.println("LOG: " + instant);
+        datos.setPart2(0);
+        datos.setUsado(true);
+        datos.setWord(null);
+        logger.info("LOG: " + (lognumber + 1));
 
-            List<Integer> word = new ArrayList<Integer>();
-            slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-            // ByteBuffer.wrap(Arrays.copyOfRange(estructuraComprimida, 216468, 216470)).getShort()
-            datos.setPos(datos.getPos() + 2);
-            final Short numeroMovimientos = ByteBuffer.wrap(slice).getShort();
-            final List<Short> objetos = new ArrayList<Short>();
-            for (int i = 0; i < numeroMovimientos; i++) {
-                slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-                datos.setPos(datos.getPos() + 2);
-                final Short idObjeto = ByteBuffer.wrap(slice).getShort();
-                objetos.add(idObjeto);
-                System.out.println(idObjeto);
+        List<Integer> word = new ArrayList<Integer>();
 
-            }
-            final Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
+        final Short numeroMovimientos = estructura.readShort();
+        final List<Short> objetos = new ArrayList<Short>();
+        for (int i = 0; i < numeroMovimientos; i++) {
 
-            for (int i = 0; i < numeroMovimientos; i++) {
-                word = new ArrayList<Integer>();
-                datos = obtenerPalabraMovimientoComprimido(estructuraComprimida, encoder, word, datos);
+            final Short idObjeto = estructura.readShort();
+            objetos.add(idObjeto);
+            logger.debug(String.valueOf(idObjeto));
 
-                final Integer posWord = encoder.decode(word);
-
-                if (posWord == POSICION_REAPARICION_RELATIVA) {
-                    System.out.println("idObjeto: " + objetos.get(i) + " R: ");
-                    datos = obtenerPalabraMovimientoComprimido(estructuraComprimida, encoder, word, datos);
-                }
-
-                if (posWord == POSICION_REAPARICION_ABSOLUTA) {
-                    if (!datos.isUsado()) {
-
-                        datos = obtenerPalabraDeMovimientoAbsolutoImpar(estructuraComprimida, word, objetos,
-                                datos, i);
-                    } else {
-                        datos = obtenerPalabraDeMovimientoAbsolutoPar(estructuraComprimida, word, datos);
-                    }
-
-                }
-                objetoMovimientoMap.put(objetos.get(i).intValue(), new MovimientoComprimido(word));
-                System.out.println("datos.getPos(): " + datos.getPos());
-                System.out.println("idObjeto: " + objetos.get(i) + " Word: " + word + " Decode: "
-                        + encoder.decode(word));
-
-            }
-            final Log log = new Log(objetoMovimientoMap);
-            logs.put(instant, log);
-            instant++;
         }
+        final Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
+
+        for (int i = 0; i < numeroMovimientos; i++) {
+            word = new ArrayList<Integer>();
+            datos = obtenerPalabraMovimientoComprimido(estructura, encoder, word, datos);
+
+            final Integer posWord = encoder.decode(word);
+
+            if (posWord == POSICION_REAPARICION_RELATIVA) {
+                logger.debug("idObjeto: " + objetos.get(i) + " R: ");
+                datos = obtenerPalabraMovimientoComprimido(estructura, encoder, word, datos);
+            }
+
+            if (posWord == POSICION_REAPARICION_ABSOLUTA) {
+                if (!datos.isUsado()) {
+
+                    datos = obtenerPalabraDeMovimientoAbsolutoImpar(estructura, word, objetos,
+                            datos, i);
+                } else {
+                    datos = obtenerPalabraDeMovimientoAbsolutoPar(estructura, word, datos);
+                }
+
+            }
+            objetoMovimientoMap.put(objetos.get(i).intValue(), new MovimientoComprimido(word));
+            logger.debug("datos.getPos(): " + datos.getPos());
+            logger.debug("idObjeto: " + objetos.get(i) + " Word: " + word + " Decode: "
+                    + encoder.decode(word));
+
+        }
+        final Log log = new Log(objetoMovimientoMap);
+        logs.put((lognumber + 1), log);
+        instant++;
 
     }
 
-    private static LogPositionBean obtenerPalabraMovimientoComprimido(final byte[] estructuraComprimida,
-            final SCDenseCoder encoder, final List<Integer> word, LogPositionBean datos) {
-        byte[] slice;
+    private static LogPositionBean obtenerPalabraMovimientoComprimido(final RandomAccessFile estructura,
+            final SCDenseCoder encoder, final List<Integer> word, LogPositionBean datos) throws IOException {
+        final byte[] slice;
         int part1;
         if (!datos.isUsado()) {
             word.add(datos.getPart2());
             datos.setUsado(true);
-            datos = completarWord(estructuraComprimida, encoder, word, datos);
+            datos = completarWord(estructura, encoder, word, datos);
         } else {
             // System.out.println("datos.getPos(): " + datos.getPos());
-            slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 1);
-            datos.setPos(datos.getPos() + 1);
-            part1 = obtenerChunk4bits(0, slice);
-            datos.setPart2(obtenerChunk4bits(1, slice));
+            final byte byteActual = estructura.readByte();
+            part1 = obtenerChunk4bits(0, byteActual);
+            datos.setPart2(obtenerChunk4bits(1, byteActual));
             datos.setUsado(false);
             word.add(part1);
-            datos = completarWord(estructuraComprimida, encoder, word, datos);
+            datos = completarWord(estructura, encoder, word, datos);
         }
         return datos;
     }
 
-    private static LogPositionBean obtenerPalabraDeMovimientoAbsolutoPar(final byte[] estructuraComprimida,
-            final List<Integer> word, final LogPositionBean datos) {
-        byte[] slice;
+    private static LogPositionBean obtenerPalabraDeMovimientoAbsolutoPar(final RandomAccessFile estructura,
+            final List<Integer> word, final LogPositionBean datos) throws IOException {
+        final byte[] slice;
         // X
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-        datos.setPos(datos.getPos() + 2);
-        word.add((int) ByteBuffer.wrap(slice).getShort());
+        word.add((int) estructura.readShort());
         // Y
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-        datos.setPos(datos.getPos() + 2);
-        word.add((int) ByteBuffer.wrap(slice).getShort());
+        word.add((int) estructura.readShort());
 
         return datos;
     }
 
-    private static LogPositionBean obtenerPalabraDeMovimientoAbsolutoImpar(final byte[] estructuraComprimida,
+    private static LogPositionBean obtenerPalabraDeMovimientoAbsolutoImpar(final RandomAccessFile estructura,
+            final List<Integer> word, final List<Short> objetos, final LogPositionBean datos, final int i)
+            throws IOException {
+        final byte[] slice;
 
-            final List<Integer> word, final List<Short> objetos, final LogPositionBean datos, final int i) {
-        byte[] slice;
         // A id: 740 word: [1, 15014, 16554]
         // X
+        long puntero = estructura.getFilePointer();
         int x = datos.getPart2() << 12;
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-        short bloque = ByteBuffer.wrap(slice).getShort();
+        short bloque = estructura.readShort();
         // Nos sobran los ultimos 4 bits que almacenamos en part2
         bloque = (short) (bloque >>> 4);
         if (bloque < 0) {
             bloque = (short) (bloque + 4096);
         }
-        datos.setPos(datos.getPos() + 1);
-
+        estructura.seek(puntero + 1);
         x = x + bloque;
         // System.out.println("datos.getPos(): " + datos.getPos());
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 1);
-        datos.setPos(datos.getPos() + 1);
 
-        datos.setPart2(obtenerChunk4bits(1, slice));
+        byte byteActual = estructura.readByte();
+
+        datos.setPart2(obtenerChunk4bits(1, byteActual));
 
         word.add(x);
         // Y
+
+        puntero = estructura.getFilePointer();
         int y = datos.getPart2() << 12;
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 2);
-        bloque = ByteBuffer.wrap(slice).getShort();
+
+        bloque = estructura.readShort();
         // Nos sobran los ultimos 4 bits que almacenamos en part2
         bloque = (short) (bloque >>> 4);
         if (bloque < 0) {
             bloque = (short) (bloque + 4096);
         }
-        datos.setPos(datos.getPos() + 1);
+        estructura.seek(puntero + 1);
         y = y + bloque;
-        slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 1);
+
+        byteActual = estructura.readByte();
         datos.setPos(datos.getPos() + 1);
 
-        datos.setPart2(obtenerChunk4bits(1, slice));
+        datos.setPart2(obtenerChunk4bits(1, byteActual));
 
         word.add(y);
-        System.out.println("idObjeto: " + objetos.get(i) + " Reap. ABS   X: " + x + " y: "
+        logger.debug("idObjeto: " + objetos.get(i) + " Reap. ABS   X: " + x + " y: "
                 + y);
 
         return datos;
     }
 
-    private static LogPositionBean completarWord(final byte[] estructuraComprimida, final SCDenseCoder encoder,
-            final List<Integer> word, final LogPositionBean datos) {
-        byte[] slice;
+    private static LogPositionBean completarWord(final RandomAccessFile estructura, final SCDenseCoder encoder,
+            final List<Integer> word, final LogPositionBean datos) throws IOException {
+        final byte[] slice;
         int part1;
         while (!encoder.wordComplete(word)) {
             if (datos.isUsado()) {
-                System.out.println("datos.getPos(): " + datos.getPos());
-                slice = Arrays.copyOfRange(estructuraComprimida, datos.getPos(), datos.getPos() + 1);
-                datos.setPos(datos.getPos() + 1);
-                part1 = obtenerChunk4bits(0, slice);
-                datos.setPart2(obtenerChunk4bits(1, slice));
+                // System.out.println("datos.getPos(): " + datos.getPos());
+                final byte byteActual = estructura.readByte();
+                part1 = obtenerChunk4bits(0, byteActual);
+                datos.setPart2(obtenerChunk4bits(1, byteActual));
                 datos.setUsado(false);
                 word.add(part1);
             } else {
@@ -378,6 +360,16 @@ public class LogHelper {
             }
         }
         return datos;
+    }
+
+    private static int obtenerChunk4bits(final int pos, final byte byteActual) {
+        if ((pos % 2) == 0) {
+            // System.out.println(pos + " " + ((array[pos / 2] & 0xF0) >> 4));
+            return (byteActual & 0xF0) >> 4; // unsigned bit shift
+        } else {
+            // System.out.println(pos + " " + (array[pos / 2] & 0x0F));
+            return byteActual & 0x0F;
+        }
     }
 
     private static Integer obtenerChunk4bits(final int pos, final byte[] array) {
@@ -391,4 +383,5 @@ public class LogHelper {
         }
 
     }
+
 }

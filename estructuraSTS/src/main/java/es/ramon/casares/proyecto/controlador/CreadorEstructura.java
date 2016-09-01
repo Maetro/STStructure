@@ -7,6 +7,7 @@
 
 package es.ramon.casares.proyecto.controlador;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,10 +22,8 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
-import es.ramon.casares.proyecto.modelo.estructura.Estructura;
 import es.ramon.casares.proyecto.modelo.log.Log;
 import es.ramon.casares.proyecto.modelo.log.Movimiento;
 import es.ramon.casares.proyecto.modelo.log.MovimientoComprimido;
@@ -140,7 +139,7 @@ public class CreadorEstructura {
      * @throws IOException
      *             Signals that an I/O exception has occurred.
      */
-    public final void inicializar(final Resource ficheroFrecuencias, final ConfiguracionHelper configuracion)
+    public final void inicializar(final File ficheroFrecuencias, final ConfiguracionHelper configuracion)
             throws FileNotFoundException, IOException {
 
         this.desaparicion = new Movimiento(this.limiteLog, this.limiteLog);
@@ -152,7 +151,7 @@ public class CreadorEstructura {
             }
         }
 
-        this.datareader = new RandomAccessFile(ficheroFrecuencias.getFile(), "r");
+        this.datareader = new RandomAccessFile(ficheroFrecuencias, "r");
         String currentLine;
         while ((currentLine = this.datareader.readLine()) != null) {
             this.movimientosPorFrecuencia.add(Integer.valueOf(currentLine));
@@ -165,7 +164,7 @@ public class CreadorEstructura {
     /**
      * Crear estructura.
      *
-     * @param fichero
+     * @param ficheroDataSet
      *            the fichero
      * @param configuracion
      *            the configuracion
@@ -177,7 +176,7 @@ public class CreadorEstructura {
      * @throws ImpossibleToSolveColisionException
      *             the impossible to solve colision exception
      */
-    public final List<Integer> crearEstructura(final Resource fichero, final ConfiguracionHelper configuracion)
+    public final List<Integer> crearEstructura(final File ficheroDataSet, final ConfiguracionHelper configuracion)
             throws NumberFormatException, IOException, ImpossibleToSolveColisionException {
         String currentLine;
 
@@ -185,7 +184,7 @@ public class CreadorEstructura {
         final FileOutputStream tempFile = ByteFileHelper
                 .crearFicheroEscrituraSiNoExiste("src/main/resources/EstructuraTemporal");
         int lastInstant = 0;
-        this.datareader = new RandomAccessFile(fichero.getFile(), "r");
+        this.datareader = new RandomAccessFile(ficheroDataSet, "r");
 
         while ((currentLine = this.datareader.readLine()) != null) {
             final String[] result = currentLine.trim().split("\\s");
@@ -241,7 +240,8 @@ public class CreadorEstructura {
 
             }
         }
-        final Estructura estructura = new Estructura(null, null);
+        this.datareader.close();
+        tempFile.close();
         return this.punteros;
 
     }
@@ -369,7 +369,7 @@ public class CreadorEstructura {
                 this.punteros.add(this.puntero);
                 this.puntero = CompresorEstructuraHelper.comprimirBloqueSnapshotLog(this.snapshot, this.logs, tempFile,
                         this.numeroBloques, configuracion.getS(), configuracion.getC(), this.puntero);
-
+                logger.info("Snapshot: " + this.numeroBloques);
                 this.numeroBloques++;
             }
             this.logs.clear();
@@ -378,7 +378,8 @@ public class CreadorEstructura {
             this.ultimaPosicionDesaparecidos.clear();
             this.desaparecidoRelativo.clear();
             // Punto de generacion de Snapshot
-            final K2Tree k2Tree = K2TreeHelper.generarK2Tree(this.posicionIds, this.limiteSnapshot,
+            final K2Tree k2Tree = K2TreeHelper.generarK2Tree(this.posicionIds,
+                    ControladorHelper.numeroCuadradosSegunLimite(this.limiteSnapshot),
                     configuracion.getMinimumSquare());
             final byte[] bytes = K2TreeHelper.serializarK2Tree(k2Tree);
             final int tamanoBytes = K2TreeHelper.obtenerTamanoK2Tree(k2Tree);

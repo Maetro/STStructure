@@ -12,7 +12,7 @@ package es.ramon.casares.proyecto.modelo.parametros;
 public class LimitesBean {
 
     /** The limite. */
-    private int limiteMovimiento;
+    private int limitesCuadrado;
 
     /** The id objeto. */
     private int numeroObjetos;
@@ -23,14 +23,14 @@ public class LimitesBean {
     /**
      * Instantiates a new limites bean.
      *
-     * @param limite
+     * @param limitesCuadrado
      *            the limite
      * @param idObjeto
      *            the id objeto
      */
-    public LimitesBean(final int limite, final int idObjeto) {
+    public LimitesBean(final int limitesCuadrado, final int idObjeto) {
         super();
-        this.limiteMovimiento = limite;
+        this.limitesCuadrado = limitesCuadrado;
         this.numeroObjetos = idObjeto;
     }
 
@@ -39,8 +39,8 @@ public class LimitesBean {
      *
      * @return the limite
      */
-    public int getLimiteMovimiento() {
-        return this.limiteMovimiento;
+    public int getLimiteCuadrado() {
+        return this.limitesCuadrado;
     }
 
     /**
@@ -49,8 +49,8 @@ public class LimitesBean {
      * @param limite
      *            the new limite
      */
-    public void setLimiteMovimiento(final int limite) {
-        this.limiteMovimiento = limite;
+    public void setLimiteCuadrado(final int limite) {
+        this.limitesCuadrado = limite;
     }
 
     /**

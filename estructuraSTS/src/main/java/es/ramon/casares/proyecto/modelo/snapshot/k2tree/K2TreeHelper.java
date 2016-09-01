@@ -6,18 +6,24 @@
  */
 package es.ramon.casares.proyecto.modelo.snapshot.k2tree;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Stack;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import es.ramon.casares.proyecto.modelo.matrix.MatrixOfPositions;
@@ -33,6 +39,9 @@ import no.uib.cipr.matrix.MatrixEntry;
  * The Class K2TreeHelper.
  */
 public class K2TreeHelper {
+
+    /** The logger. */
+    private static final Logger logger = LoggerFactory.getLogger(K2TreeHelper.class);
 
     /**
      * Generar k2 tree.
@@ -260,39 +269,50 @@ public class K2TreeHelper {
     }
 
     private static Integer analisisCuadradoFinal(final MatrixOfPositions matriz, final Integer puntoXinferior,
-            final Integer puntoYinferior,
-            final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos,
+            final Integer puntoYinferior, final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos,
             final ArrayList<Short> idsObjetos) {
 
-        // System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        // System.out.println(" : [" + puntoXinferior + "," + puntoYinferior + "]");
+        logger.debug("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+        logger.debug(" : [" + puntoXinferior + "," + puntoYinferior + "]");
 
         // Esquina SuperiorIzquierda
-        Double valor = matriz.getMatriz().get(puntoYsuperior, puntoXinferior);
+        Double valor = matriz.getMatriz().get(puntoXinferior, puntoYsuperior);
         if (valor != 0d) {
             datos += 8;
             idsObjetos.add(valor.shortValue());
+            logger.debug("[" + valor.shortValue() + ",");
+        } else {
+            logger.debug("[ ,");
         }
 
         // Esquina SuperiorDerecha
-        valor = matriz.getMatriz().get(puntoYsuperior, puntoXsuperior);
+        valor = matriz.getMatriz().get(puntoXsuperior, puntoYsuperior);
         if (valor != 0d) {
             datos += 4;
             idsObjetos.add(valor.shortValue());
+            logger.debug(valor.shortValue() + "]");
+        } else {
+            logger.debug(" ]");
         }
         // Esquina InferiorIzquierda
-        valor = matriz.getMatriz().get(puntoYinferior, puntoXinferior);
+        valor = matriz.getMatriz().get(puntoXinferior, puntoYinferior);
         if (valor != 0d) {
 
             datos += 2;
             idsObjetos.add(valor.shortValue());
+            logger.debug("[" + valor.shortValue() + ",");
+        } else {
+            logger.debug("[ ,");
         }
         // Esquina InferiorDerecha
-        valor = matriz.getMatriz().get(puntoYinferior, puntoXsuperior);
+        valor = matriz.getMatriz().get(puntoXsuperior, puntoYinferior);
         if (valor != 0d) {
 
             datos += 1;
             idsObjetos.add(valor.shortValue());
+            logger.debug(valor.shortValue() + "]");
+        } else {
+            logger.debug(" ]");
         }
         return datos;
     }
@@ -324,44 +344,44 @@ public class K2TreeHelper {
             final Integer puntoXsuperior, final Integer puntoYsuperior, Integer datos, final Integer puntoMedioY,
             final Integer puntoMedioX, final Integer nivel) {
 
-        // System.out.println("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
-        // System.out.println(" : [" + puntoXinferior + "," + puntoYinferior + "]");
+        logger.debug("Analisis cuadrado: [" + puntoXsuperior + "," + puntoYsuperior + "]");
+        logger.debug(" : [" + puntoXinferior + "," + puntoYinferior + "]");
         // Esquina SuperiorIzquierda
 
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoMedioY + 1, puntoMedioX, puntoYsuperior)) {
             datos += 8;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoMedioY + 1, puntoMedioX,
                     puntoYsuperior, nivel));
-            // System.out.print("[*,");
+            logger.debug("[*,");
         } else {
-            // System.out.print("[ ,");
+            logger.debug("[ ,");
         }
         // Esquina SuperiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior, puntoYsuperior)) {
             datos += 4;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoMedioY + 1, puntoXsuperior,
                     puntoYsuperior, nivel));
-            // System.out.println("*]");
+            logger.debug("*]");
         } else {
-            // System.out.println(" ]");
+            logger.debug(" ]");
         }
         // Esquina InferiorIzquierda
         if (hayValoresEnRegion(matriz, puntoXinferior, puntoYinferior, puntoMedioX, puntoMedioY)) {
             datos += 2;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoXinferior, puntoYinferior, puntoMedioX,
                     puntoMedioY, nivel));
-            // System.out.print("[*,");
+            logger.debug("[*,");
         } else {
-            // System.out.print("[ ,");
+            logger.debug("[ ,");
         }
         // Esquina InferiorDerecha
         if (hayValoresEnRegion(matriz, puntoMedioX + 1, puntoYinferior, puntoXsuperior, puntoMedioY)) {
             datos += 1;
             regionesPendientesAnalizar.add(new RegionAnalizarBean(puntoMedioX + 1, puntoYinferior, puntoXsuperior,
                     puntoMedioY, nivel));
-            // System.out.println("*]");
+            logger.debug("*]");
         } else {
-            // System.out.println(" ]");
+            logger.debug(" ]");
         }
         return datos;
     }
@@ -386,8 +406,8 @@ public class K2TreeHelper {
         final Iterator<MatrixEntry> iterador = matriz.getMatriz().iterator();
         while (iterador.hasNext()) {
             final MatrixEntry sig = iterador.next();
-            if ((sig.row() >= puntoYinferior) && (sig.row() <= puntoYsuperior)) {
-                if ((sig.column() >= puntoXinferior) && (sig.column() <= puntoXsuperior)) {
+            if ((sig.column() >= puntoYinferior) && (sig.column() <= puntoYsuperior)) {
+                if ((sig.row() >= puntoXinferior) && (sig.row() <= puntoXsuperior)) {
                     if (sig.get() != 0d) {
                         return true;
                     }
@@ -413,10 +433,38 @@ public class K2TreeHelper {
         return numbytes;
     }
 
-    public static Posicion obtenerPosicionEnSnapshot(final K2Tree snapshot, final Integer idObjeto) {
-        // reconstruirMatriz(snapshot);
+    /**
+     * Obtener posicion en snapshot.
+     *
+     * @param snapshot
+     *            the snapshot
+     * @param idObjeto
+     *            the id objeto
+     * @param numeroCuadrados
+     *            the numero cuadrados
+     * @return the posicion
+     */
+    public static Posicion obtenerPosicionEnSnapshot(final K2Tree snapshot, final Integer idObjeto,
+            final Integer numeroCuadrados) {
+        int x1 = 0;
+        int y1 = 0;
+        final int k = 2;
+        int x2 = numeroCuadrados - 1;
+        int y2 = numeroCuadrados - 1;
+        final Stack<Integer> pila = obtenerCamino(snapshot, idObjeto);
+        while (!pila.isEmpty()) {
+            final Integer posicion = pila.pop();
+            final Integer column = posicion % k;
+            final Integer row = posicion / k;
+            final Integer pivX = ((x2 - x1) + 1) / k;
+            final Integer pivY = ((y2 - y1) + 1) / k;
+            x2 = ((pivX * (column + 1)) + x1) - 1;
+            x1 = (x2 - pivX) + 1;
+            y2 = ((pivY * (row + 1)) + y1) - 1;
+            y1 = (y2 - pivY) + 1;
 
-        return new Posicion(0, 0);
+        }
+        return new Posicion(x1, (numeroCuadrados - 1) - y1);
     }
 
     /**
@@ -523,17 +571,38 @@ public class K2TreeHelper {
         return pos;
     }
 
-    // public static MatrixOfPositions obtenerMatriz(K2Tree k2Tree,int limite, int minimoCuadrado) {
-    // MatrixOfPositions matriz = new MatrixOfPositions(limite, minimoCuadrado);
-    // k2Tree.get
-    // matriz.i
-    // return matriz;
-    // }
-    //
-    // public static encontrarCamino(K2Tree k2Tree){
-    // Stack path = new Stack<Integer>();
-    // p =
-    // }
+    public static K2Tree descomprimirSnapshot(final RandomAccessFile fichero) throws IOException {
+
+        final K2Tree snapshot = new K2Tree();
+
+        final Integer tamano = fichero.readInt();
+        final Integer bytesT = fichero.readInt();
+        final Integer bytesL = fichero.readInt();
+        final Integer bytesPerm = fichero.readInt();
+        final List<Byte> T = new ArrayList<Byte>();
+        int i = 0;
+
+        for (i = 0; i < bytesT; i++) {
+
+            T.add(fichero.readByte());
+        }
+
+        final List<Byte> L = new ArrayList<Byte>();
+        i = 0;
+        for (i = 0; i < bytesL; i++) {
+            L.add(fichero.readByte());
+        }
+        final List<Short> idsObjetos = new ArrayList<Short>();
+        i = 0;
+        for (i = 0; i < (bytesPerm * 2); i += 2) {
+            idsObjetos.add(fichero.readShort());
+        }
+
+        snapshot.setT(T);
+        snapshot.setL(L);
+        snapshot.setIdsObjetos(idsObjetos);
+        return snapshot;
+    }
 
     // Algorithm 2.1 (FindPath), Obtiene el camino desde la raíz a la hoja en el
     // snapshot que contiene un objeto especificado como parámetro
@@ -549,28 +618,79 @@ public class K2TreeHelper {
     // 7: x = Padre(x)
     // 8: end while
     // 9: return path
-    //
-    // (o)
-    //
-    // Algorithm 2.2 (getObjectPos), encuentra en un snapshot la posición absoluta
-    // de un objeto pasado como parámetro
-    // Entrada: Snapshot s, OID o.
-    // Salida: Punto.
-    //
-    // 1: x1 = 0, y1 = 0
-    // 2: x2 = s.N − 1, y2 = s.N − 1 . N, total de filas y columnas de s
-    // 3: path ← FindPath(s, o)
-    // 4: while Not Empty(path) do
-    // 5: i = Pop(path)
-    // 6: colum = i m ́od k
-    // 7: row = bi ÷ kc
-    // 8: pivx = (x2 − x1 + 1) ÷ k
-    // 9: pivy = (y2 − y1 + 1) ÷ k . pivx = pivy
-    // 10: x2 = pivx(colum + 1) + x1 − 1
-    // 11: x1 = x2 − pivx + 1
-    // 12: y2 = pivy · (row + 1) + y1 − 1
-    // 13: y1 = y2 − pivy + 1
-    // 14: end while
-    // 15: return NewPoint(x1, y1)
+    private static Stack obtenerCamino(final K2Tree snapshot, final int idObjeto) {
+        final Stack path = new Stack<>();
+        final int p = snapshot.getIdsObjetos().indexOf(new Short((short) idObjeto)) + 1;
+        // Posicion en bits
+
+        int x = select(snapshot.getL(), p) + (snapshot.getT().size() * 8);
+        if (obtenerChunk4bits(1, snapshot.getT().get(snapshot.getT().size() - 1)) == 0) {
+            x = x - 4;
+        }
+        while (x > 0) {
+            final int i = x % 4;
+            path.push(i);
+            if (x >= 4) {
+                x = select(snapshot.getT(), (x / 4));
+                if (x == 0) {
+                    path.push(x);
+                }
+            } else {
+                x = 0;
+            }
+
+        }
+        return path;
+    }
+
+    private static int obtenerChunk4bits(final int pos, final byte byteActual) {
+        if ((pos % 2) == 0) {
+            // logger.debug(pos + " " + ((array[pos / 2] & 0xF0) >> 4));
+            return (byteActual & 0xF0) >> 4; // unsigned bit shift
+        } else {
+            // logger.debug(pos + " " + (array[pos / 2] & 0x0F));
+            return byteActual & 0x0F;
+        }
+    }
+
+    private static int select(final List<Byte> l2, int p) {
+        int pos = 0;
+        for (final Byte byteActual : l2) {
+            final int temp = Integer.valueOf(byteActual);
+            int numberOfOnes = Integer.bitCount(temp);
+            if (temp < 0) {
+                numberOfOnes = numberOfOnes - 24;
+            }
+            if (numberOfOnes < p) {
+                pos += 8;
+                p = p - numberOfOnes;
+            } else {
+                final byte b = (byte) temp;
+                final int i2 = b & 0xFF;
+                final String representation = Integer.toBinaryString(i2);
+                Integer number = Integer.valueOf(representation);
+
+                final List<Integer> separados = new ArrayList<Integer>();
+                while (number > 0) {
+                    separados.add(number % 10);
+                    number = number / 10;
+                }
+                Collections.reverse(separados);
+                pos += 8 - separados.size();
+                for (final Integer integer : separados) {
+                    if (integer == 1) {
+                        p--;
+                        if (p == 0) {
+                            break;
+                        }
+                    }
+                    pos++;
+                }
+                break;
+            }
+        }
+        // TODO Auto-generated method stub
+        return pos;
+    }
 
 }

@@ -156,7 +156,7 @@ public class ControladorHelper {
     }
 
     public static LimitesBean analizadorDeLimites(final File dataSet) throws IOException {
-        int limiteMovimiento = 0;
+        int limitesCuadrado = 0;
         int idObjetoMayo = 0;
         final RandomAccessFile datareader = new RandomAccessFile(dataSet, "r");
         String currentLine;
@@ -170,17 +170,25 @@ public class ControladorHelper {
                 if (id > idObjetoMayo) {
                     idObjetoMayo = id;
                 }
-                if (x > limiteMovimiento) {
-                    limiteMovimiento = x;
+                if (x > limitesCuadrado) {
+                    limitesCuadrado = x;
                 }
-                if (y > limiteMovimiento) {
-                    limiteMovimiento = y;
+                if (y > limitesCuadrado) {
+                    limitesCuadrado = y;
                 }
             }
         }
-        final LimitesBean limites = new LimitesBean(limiteMovimiento, idObjetoMayo);
+        final LimitesBean limites = new LimitesBean(limitesCuadrado, idObjetoMayo);
         return limites;
 
     }
 
+    public static Integer numeroCuadradosSegunLimite(final int limit) {
+        int i = 1;
+        while (Math.pow(2, i) < limit) {
+            i++;
+        }
+        final Integer limite = (int) Math.pow(2, i);
+        return limite;
+    }
 }

@@ -15,7 +15,6 @@ import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 
@@ -45,7 +44,7 @@ public class SolucionadorRepetidosHelper {
      * @throws IOException
      *             Signals that an I/O exception has occurred.
      */
-    public void resolverRepeticiones(final Resource ficheroNormalizado) throws NumberFormatException, IOException {
+    public void resolverRepeticiones(final File ficheroNormalizado) throws NumberFormatException, IOException {
         String currentLine;
 
         final File tempFile = new File("src/main/resources/ficheroSinRepetidos");
@@ -58,7 +57,7 @@ public class SolucionadorRepetidosHelper {
         }
         final BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 
-        this.datareader = new RandomAccessFile(ficheroNormalizado.getFile(), "r");
+        this.datareader = new RandomAccessFile(ficheroNormalizado, "r");
 
         while ((currentLine = this.datareader.readLine()) != null) {
 

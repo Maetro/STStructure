@@ -38,9 +38,9 @@ public class ParseadorFicherosEntradaImis implements ParseadorFicherosEntrada {
     public LineaEntradaParseada parsearLineaEntrada(final String lineaTexto) {
 
         final LineaEntradaParseada respuesta = new LineaEntradaParseada();
-        final String[] parametros = lineaTexto.split(",");
-        obtenerInstanteLinea(respuesta, parametros);
-        // final Integer instante = Integer.valueOf(parametros[0]);
+        final String[] parametros = lineaTexto.split(" ");
+        // obtenerInstanteLinea(respuesta, parametros);
+        final Integer instante = Integer.valueOf(parametros[0]);
         final Double longitud = Double.valueOf(parametros[1]);
         final Double latitud = Double.valueOf(parametros[2]);
         final Integer idObjeto = Integer.valueOf(parametros[3]);

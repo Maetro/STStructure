@@ -48,6 +48,9 @@ public class ComprimirEstructuraParametersBean {
     /** The codigo reaparicion absoluta. */
     private Integer codigoReaparicionAbsoluta;
 
+    /** The limite cuadrados. */
+    private Integer limiteCuadrados;
+
     /**
      * Gets the separacion snapshots.
      *
@@ -257,6 +260,25 @@ public class ComprimirEstructuraParametersBean {
         this.codigoReaparicionAbsoluta = codigoReaparicionAbsoluta;
     }
 
+    /**
+     * Gets the limite cuadrados.
+     *
+     * @return the limite cuadrados
+     */
+    public Integer getLimiteCuadrados() {
+        return this.limiteCuadrados;
+    }
+
+    /**
+     * Sets the limite cuadrados.
+     *
+     * @param limiteCuadrados
+     *            the new limite cuadrados
+     */
+    public void setLimiteCuadrados(final Integer limiteCuadrados) {
+        this.limiteCuadrados = limiteCuadrados;
+    }
+
     /*
      * (non-Javadoc)
      *
@@ -278,7 +300,8 @@ public class ComprimirEstructuraParametersBean {
                 .append(this.longitudSuperiorMapa, castOther.longitudSuperiorMapa)
                 .append(this.fechaInstanteInicial, castOther.fechaInstanteInicial)
                 .append(this.segundosPorInstante, castOther.segundosPorInstante)
-                .append(this.codigoReaparicionAbsoluta, castOther.codigoReaparicionAbsoluta).isEquals();
+                .append(this.codigoReaparicionAbsoluta, castOther.codigoReaparicionAbsoluta)
+                .append(this.limiteCuadrados, castOther.limiteCuadrados).isEquals();
     }
 
     /*
@@ -293,7 +316,8 @@ public class ComprimirEstructuraParametersBean {
                 .append(this.parametroS).append(this.parametroC).append(this.latitudInferiorMapa)
                 .append(this.latitudSuperiorMapa)
                 .append(this.longitudInferiorMapa).append(this.longitudSuperiorMapa).append(this.fechaInstanteInicial)
-                .append(this.segundosPorInstante).append(this.codigoReaparicionAbsoluta).toHashCode();
+                .append(this.segundosPorInstante).append(this.codigoReaparicionAbsoluta).append(this.limiteCuadrados)
+                .toHashCode();
     }
 
     @Override
@@ -307,7 +331,8 @@ public class ComprimirEstructuraParametersBean {
                 .append("longitudSuperiorMapa", this.longitudSuperiorMapa)
                 .append("fechaInstanteInicial", this.fechaInstanteInicial)
                 .append("segundosPorInstante", this.segundosPorInstante)
-                .append("codigoReaparicionAbsoluta", this.codigoReaparicionAbsoluta).toString();
+                .append("codigoReaparicionAbsoluta", this.codigoReaparicionAbsoluta)
+                .append("limiteCuadrados", this.limiteCuadrados).toString();
     }
 
 }

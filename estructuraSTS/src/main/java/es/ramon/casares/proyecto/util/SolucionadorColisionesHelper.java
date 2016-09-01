@@ -16,7 +16,6 @@ import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
 
 import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
@@ -43,7 +42,7 @@ public class SolucionadorColisionesHelper {
 
     private final HashMap<Integer, ObjetoMovil> mapaIds = new HashMap<Integer, ObjetoMovil>();
 
-    public int resolverColisiones(final Resource ficheroNormalizado) throws NumberFormatException, IOException,
+    public int resolverColisiones(final File ficheroSinRepeticiones) throws NumberFormatException, IOException,
             ImpossibleToSolveColisionException {
         String currentLine;
         int numOfCollisions = 0;
@@ -56,8 +55,7 @@ public class SolucionadorColisionesHelper {
 
         final BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 
-        this.datareader = new RandomAccessFile(ficheroNormalizado.getFile(), "r");
-
+        this.datareader = new RandomAccessFile(ficheroSinRepeticiones, "r");
         while ((currentLine = this.datareader.readLine()) != null) {
             final String[] result = currentLine.trim().split("\\s");
             if (result.length >= 3) {
@@ -113,12 +111,12 @@ public class SolucionadorColisionesHelper {
         return numOfCollisions;
     }
 
-    public int detectarColisiones(final Resource ficheroNormalizado) throws NumberFormatException, IOException,
+    public int detectarColisiones(final File ficheroSinColisiones) throws NumberFormatException, IOException,
             ImpossibleToSolveColisionException {
         String currentLine;
         int numOfCollisions = 0;
 
-        this.datareader = new RandomAccessFile(ficheroNormalizado.getFile(), "r");
+        this.datareader = new RandomAccessFile(ficheroSinColisiones, "r");
 
         while ((currentLine = this.datareader.readLine()) != null) {
             final String[] result = currentLine.trim().split("\\s");

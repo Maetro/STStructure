@@ -23,23 +23,30 @@ public class Estructura {
     /** The logs. */
     private Map<Integer, Log> logs = new HashMap<Integer, Log>();
 
+    /** The numero cuadrados. */
+    private final Integer numeroCuadrados;
+
     /**
      * Instantiates a new estructura.
-     *
+     * 
      * @param snapshotsP
      *            the snapshots
      * @param logsP
      *            the logs
+     * @param numeroCuadrados
+     *            the numero cuadrados
      */
-    public Estructura(final Map<Integer, Snapshot> snapshotsP, final Map<Integer, Log> logsP) {
+    public Estructura(final Map<Integer, Snapshot> snapshotsP, final Map<Integer, Log> logsP,
+            final Integer numeroCuadradosP) {
         super();
         this.snapshots = snapshotsP;
         this.logs = logsP;
+        this.numeroCuadrados = numeroCuadradosP;
     }
 
     /**
      * Gets the snapshots.
-     *
+     * 
      * @return the snapshots
      */
     public final Map<Integer, Snapshot> getSnapshots() {
@@ -48,7 +55,7 @@ public class Estructura {
 
     /**
      * Establece snapshots.
-     *
+     * 
      * @param snapshotsP
      *            the snapshots
      */
@@ -58,7 +65,7 @@ public class Estructura {
 
     /**
      * Gets the logs.
-     *
+     * 
      * @return the logs
      */
     public final Map<Integer, Log> getLogs() {
@@ -67,12 +74,21 @@ public class Estructura {
 
     /**
      * Establece logs.
-     *
+     * 
      * @param logsP
      *            the logs
      */
     public final void setLogs(final Map<Integer, Log> logsP) {
         this.logs = logsP;
+    }
+
+    /**
+     * Obtiene numero cuadrados.
+     * 
+     * @return numero cuadrados
+     */
+    public Integer getNumeroCuadrados() {
+        return this.numeroCuadrados;
     }
 
 }
