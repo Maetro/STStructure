@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.ramon.casares.proyecto.Test;
+import es.ramon.casares.proyecto.encoder.SCDenseCoder;
 import es.ramon.casares.proyecto.modelo.estructura.Estructura;
+import es.ramon.casares.proyecto.modelo.log.Log;
+import es.ramon.casares.proyecto.modelo.log.Movimiento;
+import es.ramon.casares.proyecto.modelo.log.MovimientoComprimido;
+import es.ramon.casares.proyecto.modelo.matrix.Posicion;
 import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
 import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
 import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
@@ -50,7 +56,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Crear estructura.
-     * 
+     *
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -109,18 +115,23 @@ public class MainController { // NO_UCD (test only)
         this.logger.info("Todo correcto, función terminada: S: " + this.configuracion.getS() + ", C: " +
                 this.configuracion.getC());
 
+        final File estructura = new File("src/main/resources/estructuracomprimida");
+
         System.out.println(this.configuracion.getChunkSize() + "-" +
                 this.configuracion.getDistanciaEntreSnapshots() + "-" +
                 this.configuracion.getSegundosEntreInstantes() + "-" +
                 this.configuracion.getMetrosPorCelda() + "-" +
                 this.configuracion.getS() + "-" +
-                this.configuracion.getC());
+                this.configuracion.getC() + " = " + estructura.length());
+
+        System.out.println("megabytes : " + ((estructura.length() / 1024) / 1024));
+
         return "DONE";
     }
 
     /**
      * Crear parametros para comprimir.
-     * 
+     *
      * @param limites
      *            the limites
      * @param parametros
@@ -146,7 +157,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Descomprimir estructura.
-     * 
+     *
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -168,7 +179,7 @@ public class MainController { // NO_UCD (test only)
         final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
 
         final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
-                this.configuracion.getChunkSize(), 0, 30);
+                this.configuracion.getChunkSize(), 30);
 
         K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0), 133,
                 ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
@@ -180,32 +191,46 @@ public class MainController { // NO_UCD (test only)
     public final String resolverConsultaTimeSlice(@RequestParam(value = "instant") final int instant,
             @RequestParam(value = "idObjeto") final int idObjeto) throws IOException {
         // 2659 1110 11897 22982
-        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
 
-        final int numLogs = instant % this.configuracion.getDistanciaEntreSnapshots();
+        final StopWatch clock = new StopWatch();
+        clock.start();
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida-4-30-30-30-8-8");
 
-        final int numSnapshot = instant / this.configuracion.getDistanciaEntreSnapshots();
+        for (int i = 0; i < 1000; i++) {
 
-        Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
-                this.configuracion.getChunkSize(), 0, 0);
+            final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
+                    this.configuracion.getChunkSize(), instant);
 
-        K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0), 133,
-                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
+            final SCDenseCoder encoder = new SCDenseCoder(estructuraUtil.getCabecera().getParametroS(),
+                    estructuraUtil.getCabecera().getParametroC());
 
-        estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
-                this.configuracion.getChunkSize(), numSnapshot, numLogs);
+            final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
+                    idObjeto, ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
 
-        System.out.println(K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
-                idObjeto,
-                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados())));
+            for (final Log log : estructuraUtil.getLogs().values()) {
 
+                final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
+                if (movimientoComprimido != null) {
+                    final int movAntesEspiral = estructuraUtil.getMovimientosPorFrecuencia()
+                            .get(encoder.decode(movimientoComprimido.getMovimiento()));
+                    final Movimiento mov = ControladorHelper.obtenerMovimiento(movAntesEspiral);
+                    pos.setX(pos.getX() + mov.getX());
+                    pos.setY(pos.getY() + mov.getY());
+                }
+            }
+            if (i == 0) {
+                System.out.println(pos);
+            }
+        }
+        clock.stop();
+        System.out.println(clock.toString());
         return "DONE";
 
     }
 
     /**
      * Test.
-     * 
+     *
      * @return the string
      */
     @RequestMapping("/test")

@@ -7,9 +7,11 @@
 package es.ramon.casares.proyecto.modelo.estructura;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import es.ramon.casares.proyecto.modelo.log.Log;
+import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
 import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
 
 /**
@@ -26,27 +28,40 @@ public class Estructura {
     /** The numero cuadrados. */
     private final Integer numeroCuadrados;
 
+    private ComprimirEstructuraParametersBean cabecera;
+
+    /** The movimientos por frecuencia. */
+    private List<Integer> movimientosPorFrecuencia;
+
     /**
      * Instantiates a new estructura.
-     * 
+     *
      * @param snapshotsP
      *            the snapshots
      * @param logsP
      *            the logs
-     * @param numeroCuadrados
-     *            the numero cuadrados
+     * @param numeroCuadradosP
+     *            the numero cuadrados p
+     * @param cabeceraP
+     *            the cabecera p
+     * @param movimientosPorFrecuenciaP
+     *            the movimientos por frecuencia p
      */
     public Estructura(final Map<Integer, Snapshot> snapshotsP, final Map<Integer, Log> logsP,
-            final Integer numeroCuadradosP) {
+            final Integer numeroCuadradosP, final ComprimirEstructuraParametersBean cabeceraP,
+            final List<Integer> movimientosPorFrecuenciaP) {
         super();
         this.snapshots = snapshotsP;
         this.logs = logsP;
         this.numeroCuadrados = numeroCuadradosP;
+        this.cabecera = cabeceraP;
+        this.movimientosPorFrecuencia = movimientosPorFrecuenciaP;
+
     }
 
     /**
      * Gets the snapshots.
-     * 
+     *
      * @return the snapshots
      */
     public final Map<Integer, Snapshot> getSnapshots() {
@@ -55,7 +70,7 @@ public class Estructura {
 
     /**
      * Establece snapshots.
-     * 
+     *
      * @param snapshotsP
      *            the snapshots
      */
@@ -65,7 +80,7 @@ public class Estructura {
 
     /**
      * Gets the logs.
-     * 
+     *
      * @return the logs
      */
     public final Map<Integer, Log> getLogs() {
@@ -74,7 +89,7 @@ public class Estructura {
 
     /**
      * Establece logs.
-     * 
+     *
      * @param logsP
      *            the logs
      */
@@ -84,11 +99,49 @@ public class Estructura {
 
     /**
      * Obtiene numero cuadrados.
-     * 
+     *
      * @return numero cuadrados
      */
     public Integer getNumeroCuadrados() {
         return this.numeroCuadrados;
+    }
+
+    /**
+     * Gets the cabecera.
+     *
+     * @return the cabecera
+     */
+    public ComprimirEstructuraParametersBean getCabecera() {
+        return this.cabecera;
+    }
+
+    /**
+     * Sets the cabecera.
+     *
+     * @param cabecera
+     *            the new cabecera
+     */
+    public void setCabecera(final ComprimirEstructuraParametersBean cabecera) {
+        this.cabecera = cabecera;
+    }
+
+    /**
+     * Gets the movimientos por frecuencia.
+     *
+     * @return the movimientos por frecuencia
+     */
+    public List<Integer> getMovimientosPorFrecuencia() {
+        return this.movimientosPorFrecuencia;
+    }
+
+    /**
+     * Sets the movimientos por frecuencia.
+     *
+     * @param movimientosPorFrecuencia
+     *            the new movimientos por frecuencia
+     */
+    public void setMovimientosPorFrecuencia(final List<Integer> movimientosPorFrecuencia) {
+        this.movimientosPorFrecuencia = movimientosPorFrecuencia;
     }
 
 }

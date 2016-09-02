@@ -2,7 +2,7 @@ minimumsquare: 4
 distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
 instantesHastaDesaparicion: 7
-metrosPorCelda: 50
+metrosPorCelda: 30
 
 #En metros segundo
 velocidadMaxima: 33.33 
@@ -18,5 +18,5 @@ chunkSize: 4
 
 logging:
   level:
-    ROOT: INFO
+    ROOT: ERROR
 

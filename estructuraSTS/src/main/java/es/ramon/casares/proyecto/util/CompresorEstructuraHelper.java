@@ -35,7 +35,7 @@ import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
 
 /**
  * The Class CompresorEstructuraHelper.
- * 
+ *
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 public final class CompresorEstructuraHelper {
@@ -53,9 +53,9 @@ public final class CompresorEstructuraHelper {
      * bytes indicados. A Continuacion iran los Logs uno tras otro seguidos. Para que funcione necesitamos indicar el
      * numero de objetos. Por lo que antes de empezar a escribir los Logs y después de los Snapshots escribiremos el
      * numero de objetos que contiene la estructura.
-     * 
+     *
      * @param parametros
-     * 
+     *
      * @param estructura
      *            estructura
      * @param parametros
@@ -126,9 +126,9 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Crear cabeceras estructura comprimida.
-     * 
+     *
      * @param punteros
-     * 
+     *
      * @param estructura
      *            the estructura
      * @param parametros
@@ -152,7 +152,7 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Adapt lista bytes to array.
-     * 
+     *
      * @param cabecera
      *            the cabecera
      * @return the byte[]
@@ -192,7 +192,7 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Descomprimir estructura.
-     * 
+     *
      * @param estructuraComprimida
      *            the estructura comprimida
      * @param parametroS
@@ -203,7 +203,7 @@ public final class CompresorEstructuraHelper {
      * @throws IOException
      */
     public static Estructura descomprimirEstructura(final File estructuraComprimida, final int chunkSize,
-            final int numSnapshot, final int numLogs)
+            final int instant)
             throws IOException {
         final long posicion = 0;
         final RandomAccessFile estructura = new RandomAccessFile(estructuraComprimida, "r");
@@ -218,8 +218,15 @@ public final class CompresorEstructuraHelper {
         final int codigoReaparicionAbsoluta = estructura.readInt();
         final int bytesFrecuencias = estructura.readInt();
         final int limiteCuadrados = estructura.readInt();
+
+        final int numLogs = instant % separacionSnapshots;
+
+        final int numSnapshot = instant / separacionSnapshots;
+
         final ComprimirEstructuraParametersBean cabecera = new ComprimirEstructuraParametersBean();
         cabecera.setSeparacionSnapshots(separacionSnapshots);
+        cabecera.setParametroC(parametroC);
+        cabecera.setParametroS(parametroS);
 
         // Lista de frecuencias
         final int numeroMovimientos = bytesFrecuencias / 4;
@@ -247,7 +254,8 @@ public final class CompresorEstructuraHelper {
             LogHelper.descomprimirLog(estructura, logs, numeroObjetos, parametroS, parametroC, i);
         }
 
-        final Estructura resultado = new Estructura(snapshots, logs, limiteCuadrados);
+        final Estructura resultado = new Estructura(snapshots, logs, limiteCuadrados, cabecera,
+                movimientosPorFrecuencia);
         return resultado;
 
     }
