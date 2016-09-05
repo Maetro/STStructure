@@ -27,7 +27,7 @@ import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 /**
  * The Class CreadorFicheroFrecuencias.
- *
+ * 
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 public class CreadorFicheroFrecuencias {
@@ -58,7 +58,7 @@ public class CreadorFicheroFrecuencias {
 
     /**
      * Instancia un nuevo creador fichero frecuencias.
-     *
+     * 
      * @param limite
      *            limite
      */
@@ -246,13 +246,13 @@ public class CreadorFicheroFrecuencias {
         if (viejaPos != null) {
             final int diferenciaX = nuevaPos.getPosicionX() - viejaPos.getPosicionX();
             final int diferenciaY = nuevaPos.getPosicionY() - viejaPos.getPosicionY();
-            if (FunctionUtils.sonDiferenciasDentroDeLimites(1, diferenciaX, diferenciaY, this.limite)) {
+            if (FunctionUtils.sonDiferenciasDentroDeLimites(diferenciaX, diferenciaY, this.limite)) {
                 movimiento = new Movimiento(diferenciaX, diferenciaY);
                 Integer num = this.movimientos.get(movimiento);
                 num++;
                 this.movimientos.put(movimiento, num);
-            } else if (FunctionUtils.estaDentroDeLosMovimientosPosibles(
-                    (nuevaPos.getInstante() - viejaPos.getInstante()), diferenciaX, diferenciaY, this.limite)) {
+            } else if (FunctionUtils.sonDiferenciasDentroDeLimites(diferenciaX, diferenciaY, this.limite
+                    * (nuevaPos.getInstante() - viejaPos.getInstante()))) {
                 final Integer num = this.movimientos.get(this.reaparicion);
                 this.movimientos.put(this.reaparicionFueraLimites, num);
             }

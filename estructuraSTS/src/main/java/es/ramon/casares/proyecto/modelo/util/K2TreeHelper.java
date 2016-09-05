@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
 
+import no.uib.cipr.matrix.MatrixEntry;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,6 @@ import es.ramon.casares.proyecto.parametros.RegionAnalizarBean;
 import es.ramon.casares.proyecto.util.ByteFileUtil;
 import es.ramon.casares.proyecto.util.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.util.objetos.Posicion;
-import no.uib.cipr.matrix.MatrixEntry;
 
 /**
  * The Class K2TreeHelper.
@@ -46,7 +47,7 @@ public class K2TreeHelper {
 
     /**
      * Generar k2 tree.
-     *
+     * 
      * @param listaInfo
      *            the lista info
      * @return the k2 tree
@@ -87,7 +88,7 @@ public class K2TreeHelper {
 
     /**
      * Generar permutacion.
-     *
+     * 
      * @param idsObjetos
      *            ids objetos
      * @return the permutation
@@ -134,7 +135,7 @@ public class K2TreeHelper {
 
     /**
      * Transformar lista en bytes.
-     *
+     * 
      * @param sampled
      *            sampled
      * @return the list
@@ -189,7 +190,7 @@ public class K2TreeHelper {
     // Cada numero de la lista representa un numero de 4 bits. podemos unir dos numeros en uno solo
     /**
      * Comprimir.
-     *
+     * 
      * @param listanumeros
      *            listanumeros
      * @return the list
@@ -216,7 +217,7 @@ public class K2TreeHelper {
 
     /**
      * Transformar enteros en byte.
-     *
+     * 
      * @param listanumeros
      *            listanumeros
      * @param position
@@ -230,7 +231,7 @@ public class K2TreeHelper {
 
     /**
      * Unir enteros en byte. Ambos enteros entre 0 y 15
-     *
+     * 
      * @param a
      *            a
      * @param b
@@ -319,7 +320,7 @@ public class K2TreeHelper {
 
     /**
      * Analisis cuadrado.
-     *
+     * 
      * @param matriz
      *            the matriz
      * @param puntoXinferior
@@ -381,7 +382,7 @@ public class K2TreeHelper {
 
     /**
      * Hay valores en region.
-     *
+     * 
      * @param matriz
      *            the matriz
      * @param puntoXinferior
@@ -412,7 +413,7 @@ public class K2TreeHelper {
 
     /**
      * Obtener tamano k2 tree.
-     *
+     * 
      * @param snapshot
      *            snapshot
      * @return the int
@@ -428,7 +429,7 @@ public class K2TreeHelper {
 
     /**
      * Obtener posicion en snapshot.
-     *
+     * 
      * @param snapshot
      *            the snapshot
      * @param idObjeto
@@ -462,7 +463,7 @@ public class K2TreeHelper {
 
     /**
      * Serializar k2 tree.
-     *
+     * 
      * @param k2Tree
      *            k2 tree
      * @return the byte[]
@@ -501,7 +502,7 @@ public class K2TreeHelper {
 
     /**
      * Descomprimir snapshots. Se empieza en el byte 8 ya que los dos primeros enteros estan reservados.
-     *
+     * 
      * @param estructuraComprimida
      *            estructura comprimida
      * @param snapshots
@@ -565,7 +566,7 @@ public class K2TreeHelper {
 
     /**
      * Descomprimir snapshot.
-     *
+     * 
      * @param fichero
      *            the fichero
      * @return the k2 tree
@@ -607,7 +608,7 @@ public class K2TreeHelper {
 
     /**
      * Obtener camino.
-     *
+     * 
      * @param snapshot
      *            the snapshot
      * @param idObjeto

@@ -121,7 +121,7 @@ public class CreadorEstructura {
 
     /**
      * Instancia un nuevo creador fichero frecuencias.
-     *
+     * 
      * @param limiteLogP
      *            limite
      * @param limiteSnapshotP
@@ -137,7 +137,7 @@ public class CreadorEstructura {
 
     /**
      * Inicializar.
-     *
+     * 
      * @param ficheroFrecuencias
      *            the fichero frecuencias
      * @param configuracion
@@ -170,18 +170,18 @@ public class CreadorEstructura {
         this.parametros.setParametroC(configuracion.getC());
         this.parametros.setParametroS(configuracion.getS());
 
-        this.parametros.setPosicionReaparicionAbsoluta(
-                FunctionUtils.unidimensionar(this.reaparicionAbsoluta.getX(), this.reaparicionAbsoluta.getY()));
-        this.parametros.setPosicionReaparicionRelativa(
-                FunctionUtils.unidimensionar(this.reaparicionRelativa.getX(), this.reaparicionRelativa.getY()));
-        this.parametros.setPosicionReaparicionFueraLimites(FunctionUtils
-                .unidimensionar(this.reaparicionFueraLimites.getX(), this.reaparicionFueraLimites.getY()));
+        this.parametros.setPosicionReaparicionAbsoluta(this.movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(this.reaparicionAbsoluta.getX(), this.reaparicionAbsoluta.getY())));
+        this.parametros.setPosicionReaparicionRelativa(this.movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(this.reaparicionRelativa.getX(), this.reaparicionRelativa.getY())));
+        this.parametros.setPosicionReaparicionFueraLimites(this.movimientosPorFrecuencia.indexOf(FunctionUtils
+                .unidimensionar(this.reaparicionFueraLimites.getX(), this.reaparicionFueraLimites.getY())));
 
     }
 
     /**
      * Crear estructura.
-     *
+     * 
      * @param ficheroDataSet
      *            the fichero
      * @param configuracion
@@ -246,9 +246,7 @@ public class CreadorEstructura {
                             throw new InternalError("COLISION");
                         }
 
-                    }
-
-                    if (instant == 0) {
+                    } else if (instant == 0) {
                         // Posicion libre
                         anotarMovimiento(id, claveNum, nuevaPos, null);
                     } else {
@@ -258,6 +256,16 @@ public class CreadorEstructura {
 
             }
         }
+
+        if (!this.mapaDeLog.isEmpty()) {
+            procesarCambioInstante(configuracion, lastInstant, tempFile);
+        }
+        this.punteros.add(this.puntero);
+        this.puntero = CompresorEstructuraHelper.comprimirBloqueSnapshotLog(this.snapshot, this.logs, tempFile,
+                this.parametros, this.puntero);
+        logger.info("Snapshot: " + this.numeroBloques);
+        this.numeroBloques++;
+
         this.datareader.close();
         tempFile.close();
         return this.punteros;
@@ -266,7 +274,7 @@ public class CreadorEstructura {
 
     /**
      * Analizar cambio instante.
-     *
+     * 
      * @param configuracion
      *            the configuracion
      * @param lastInstant
@@ -301,7 +309,7 @@ public class CreadorEstructura {
 
     /**
      * Procesar cambio instante.
-     *
+     * 
      * @param configuracion
      *            the configuracion
      * @param instant
@@ -330,6 +338,9 @@ public class CreadorEstructura {
                         this.desaparicion.getY());
                 final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
                 final List<Integer> word = this.encoder.encode(posicionNumero);
+                System.out.println("D (" + this.desaparicion.getX() + ","
+                        + this.desaparicion.getY() + ") ->" + numeroEspiral + " -> "
+                        + posicionNumero + " -> " + word);
                 this.mapaDeLog.put(objeto.getObjetoId(), word);
             }
         }
@@ -342,7 +353,7 @@ public class CreadorEstructura {
 
     /**
      * Creacion log en cambio instante.
-     *
+     * 
      * @param configuracion
      *            the configuracion
      * @param instant
@@ -351,7 +362,7 @@ public class CreadorEstructura {
     private void creacionLogEnCambioInstante(final ConfiguracionHelper configuracion, final int instant) {
         if ((instant - 1) > 0) {
             final Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
-            for (int i = 1; i < this.numeroObjetos; i++) {
+            for (int i = 1; i <= this.numeroObjetos; i++) {
                 MovimientoComprimido movimientoComprimido = null;
                 if (this.mapaDeLog.containsKey(i)) {
                     final List<Integer> mov = this.mapaDeLog.get(i);
@@ -369,7 +380,7 @@ public class CreadorEstructura {
 
     /**
      * Creacion snapshot en cambio instante.
-     *
+     * 
      * @param configuracion
      *            the configuracion
      * @param instant
@@ -398,18 +409,18 @@ public class CreadorEstructura {
                     FunctionUtils.numeroCuadradosSegunLimite(this.limiteSnapshot));
             final byte[] bytes = K2TreeHelper.serializarK2Tree(k2Tree);
             final int tamanoBytes = K2TreeHelper.obtenerTamanoK2Tree(k2Tree);
-            System.out.println("NumBytes : " + tamanoBytes);
-            System.out.println("Real     : " + bytes.length);
+            logger.debug("NumBytes : " + tamanoBytes);
+            logger.debug("Real     : " + bytes.length);
             k2Tree.equals(k2Tree);
             this.snapshot = k2Tree;
-            System.out.println("SNAPSHOT: " + (instant - 1));
+            logger.info("SNAPSHOT: " + (instant - 1));
 
         }
     }
 
     /**
      * Anotar reaparicion absoluta.
-     *
+     * 
      * @param id
      *            the id
      * @param x
@@ -430,13 +441,16 @@ public class CreadorEstructura {
         final List<Integer> word = this.encoder.encode(posicionNumero);
         word.add(x);
         word.add(y);
+        System.out.println("RA (" + this.reaparicionAbsoluta.getX() + ","
+                + this.reaparicionAbsoluta.getY() + ") ->" + numeroEspiral + " -> "
+                + posicionNumero + " -> " + word);
         this.mapaDeLog.put(id, word);
 
     }
 
     /**
      * Anotar reaparicion relativa.
-     *
+     * 
      * @param id
      *            the id
      * @param x
@@ -463,6 +477,9 @@ public class CreadorEstructura {
             final List<Integer> word = this.encoder.encode(posicionNumero);
             word.add(diferenciaX);
             word.add(diferenciaY);
+            System.out.println("RF (" + this.reaparicionFueraLimites.getX() + ","
+                    + this.reaparicionFueraLimites.getY() + ") ->" + numeroEspiral + " -> "
+                    + posicionNumero + " -> " + word);
             this.mapaDeLog.put(id, word);
         } else {
 
@@ -476,6 +493,9 @@ public class CreadorEstructura {
             numeroEspiral = FunctionUtils.unidimensionar(movimiento.getX(), movimiento.getY());
             posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
             word.addAll(this.encoder.encode(posicionNumero));
+            System.out.println("RR (" + this.reaparicionRelativa.getX() + ","
+                    + this.reaparicionRelativa.getY() + ") ->" + numeroEspiral + " -> "
+                    + posicionNumero + " -> " + word);
             this.mapaDeLog.put(id, word);
         }
         this.ultimaPosicionDesaparecidos.remove(id);
@@ -484,7 +504,7 @@ public class CreadorEstructura {
 
     /**
      * Anotar movimiento.
-     *
+     * 
      * @param id
      *            the id
      * @param claveNum
@@ -503,7 +523,7 @@ public class CreadorEstructura {
         if (viejaPos != null) {
             final int diferenciaX = nuevaPos.getPosicionX() - viejaPos.getPosicionX();
             final int diferenciaY = nuevaPos.getPosicionY() - viejaPos.getPosicionY();
-            if (FunctionUtils.sonDiferenciasDentroDeLimites(1, diferenciaX, diferenciaY, this.limiteLog)) {
+            if (FunctionUtils.sonDiferenciasDentroDeLimites(diferenciaX, diferenciaY, this.limiteLog)) {
                 movimiento = new Movimiento(diferenciaX, diferenciaY);
 
                 final int numeroEspiral = FunctionUtils.unidimensionar(movimiento.getX(), movimiento.getY());
@@ -511,11 +531,11 @@ public class CreadorEstructura {
 
                 final List<Integer> word = this.encoder.encode(posicionNumero);
                 Collections.reverse(word);
-
+                System.out.println("(" + movimiento.getX() + "," + movimiento.getY() + ") ->" + numeroEspiral + " -> "
+                        + posicionNumero + " -> " + word);
                 this.mapaDeLog.put(id, word);
-            } else if (FunctionUtils.estaDentroDeLosMovimientosPosibles(
-                    (nuevaPos.getInstante() - viejaPos.getInstante()), diferenciaX, diferenciaY,
-                    this.limiteLog * this.instantesHastaDesparicion)) {
+            } else if (FunctionUtils.sonDiferenciasDentroDeLimites(diferenciaX, diferenciaY,
+                    this.limiteLog * (nuevaPos.getInstante() - viejaPos.getInstante()))) {
                 // Movimeinto válido fuera de espiral, lo anotamos como reaparicion fuera de limites para representarlo.
 
                 final int numeroEspiral = FunctionUtils.unidimensionar(this.reaparicionFueraLimites.getX(),
@@ -524,6 +544,9 @@ public class CreadorEstructura {
                 final List<Integer> word = this.encoder.encode(posicionNumero);
                 word.add(diferenciaX);
                 word.add(diferenciaY);
+                System.out.println("RF (" + this.reaparicionFueraLimites.getX() + ","
+                        + this.reaparicionFueraLimites.getY() + ") ->" + numeroEspiral + " -> "
+                        + posicionNumero + " -> " + word);
                 this.mapaDeLog.put(id, word);
             }
 

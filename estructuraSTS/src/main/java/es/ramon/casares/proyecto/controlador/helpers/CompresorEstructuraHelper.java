@@ -36,7 +36,7 @@ import es.ramon.casares.proyecto.util.FunctionUtils;
 
 /**
  * The Class CompresorEstructuraHelper.
- *
+ * 
  * @author <a href="ramon-jose.casares@external.connectis-gs.es">Ramon Casares</a>
  */
 public final class CompresorEstructuraHelper {
@@ -54,9 +54,9 @@ public final class CompresorEstructuraHelper {
      * bytes indicados. A Continuacion iran los Logs uno tras otro seguidos. Para que funcione necesitamos indicar el
      * numero de objetos. Por lo que antes de empezar a escribir los Logs y después de los Snapshots escribiremos el
      * numero de objetos que contiene la estructura.
-     *
+     * 
      * @param parametros
-     *
+     * 
      * @param estructura
      *            estructura
      * @param parametros
@@ -115,9 +115,9 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Crear cabeceras estructura comprimida.
-     *
+     * 
      * @param punteros
-     *
+     * 
      * @param estructura
      *            the estructura
      * @param parametros
@@ -141,7 +141,7 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Comprimir bloque snapshot log.
-     *
+     * 
      * @param snapshot
      *            the snapshot
      * @param logs
@@ -187,7 +187,7 @@ public final class CompresorEstructuraHelper {
 
     /**
      * Descomprimir estructura.
-     *
+     * 
      * @param estructuraComprimida
      *            the estructura comprimida
      * @param parametroS
@@ -251,12 +251,14 @@ public final class CompresorEstructuraHelper {
         parametros.setParametroC(parametroC);
         parametros.setParametroS(parametroS);
 
-        parametros.setPosicionReaparicionAbsoluta(
-                FunctionUtils.unidimensionar(limiteVelocidad, -limiteVelocidad));
-        parametros.setPosicionReaparicionRelativa(
-                FunctionUtils.unidimensionar(-limiteVelocidad, -limiteVelocidad));
-        parametros.setPosicionReaparicionFueraLimites(FunctionUtils
-                .unidimensionar(-limiteVelocidad, limiteVelocidad));
+        parametros.setPosicionReaparicionAbsoluta(movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(limiteVelocidad, -limiteVelocidad)));
+        parametros.setPosicionReaparicionRelativa(movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(-limiteVelocidad, -limiteVelocidad)));
+        parametros.setPosicionReaparicionFueraLimites(movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(-limiteVelocidad, limiteVelocidad)));
+        parametros.setPosicionDesaparcion(movimientosPorFrecuencia.indexOf(
+                FunctionUtils.unidimensionar(limiteVelocidad, limiteVelocidad)));
         for (int i = 0; i < numLogs; i++) {
             LogHelper.descomprimirLog(estructura, logs, parametros, i);
         }

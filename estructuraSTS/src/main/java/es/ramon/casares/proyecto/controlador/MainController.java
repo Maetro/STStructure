@@ -56,7 +56,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Crear estructura.
-     *
+     * 
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -80,13 +80,13 @@ public class MainController { // NO_UCD (test only)
                 this.configuracion.getS() + "-" +
                 this.configuracion.getC());
 
-        this.preparadorDatos.prepararDatosFichero();
+        // this.preparadorDatos.prepararDatosFichero();
 
         this.logger.info("Creando estructura");
 
         final int limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                 * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
-        final File ficheroDataSet = new File("src/main/resources/datafileSinColisiones");
+        final File ficheroDataSet = new File("src/main/resources/testReap.txt");
 
         this.logger.info("Analizando límites");
         final LimitesBean limites = FunctionUtils.analizadorDeLimites(ficheroDataSet);
@@ -130,7 +130,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Crear parametros para comprimir.
-     *
+     * 
      * @param limites
      *            the limites
      * @param parametros
@@ -156,7 +156,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Descomprimir estructura.
-     *
+     * 
      * @return the string
      * @throws ClassNotFoundException
      *             the class not found exception
@@ -200,34 +200,53 @@ public class MainController { // NO_UCD (test only)
 
         final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
                 idObjeto, FunctionUtils.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
-
-        System.out.println(instant + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
+        final int firstInstant = (instant / 30) * 30;
+        System.out.println(firstInstant + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
         int lognumber = 1;
         for (final Log log : estructuraUtil.getLogs().values()) {
 
             final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
             if (movimientoComprimido != null) {
-                final int movAntesEspiral = estructuraUtil.getMovimientosPorFrecuencia()
-                        .get(encoder.decode(movimientoComprimido.getMovimiento()));
+                final int posicion = encoder.decode(movimientoComprimido.getMovimiento());
                 if (movimientoComprimido != null) {
-                    final Integer posicionNumero = movAntesEspiral;
+                    final Integer posicionNumero = posicion;
                     if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionAbsoluta())) {
-                        System.out.println("R A");
+                        pos.setX(pos.getPosicionX() + movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 2));
+                        pos.setY(pos.getPosicionY() + movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 1));
                     } else if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionRelativa())) {
                         System.out.println("R R");
+                        final List<Integer> movimientoDoble = movimientoComprimido.getMovimiento();
+                        final List<Integer> mov = FunctionUtils.obtenerMovimientoInterno(pos, movimientoDoble,
+                                estructuraUtil.getCabecera().getParametroS());
+                        final Movimiento movimientoReap = FunctionUtils.obtenerMovimiento(estructuraUtil
+                                .getMovimientosPorFrecuencia()
+                                .get(encoder.decode(mov)));
+                        pos.setX(pos.getPosicionX() + movimientoReap.getX());
+                        pos.setY(pos.getPosicionY() + movimientoReap.getY());
                     } else if (posicionNumero
                             .equals(estructuraUtil.getParametros().getPosicionReaparicionFueraLimites())) {
-                        System.out.println("R F");
+                        pos.setX(pos.getPosicionX() + movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 2));
+                        pos.setY(pos.getPosicionY() + movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 1));
+                    } else if (posicionNumero
+                            .equals(estructuraUtil.getParametros().getPosicionDesaparicion())) {
+                        System.out.println("DESAPARECIDO");
                     } else {
 
-                        final Movimiento mov = FunctionUtils.obtenerMovimiento(movAntesEspiral);
+                        final Movimiento mov = FunctionUtils.obtenerMovimiento(estructuraUtil
+                                .getMovimientosPorFrecuencia()
+                                .get(posicion));
                         pos.setX(pos.getPosicionX() + mov.getX());
                         pos.setY(pos.getPosicionY() + mov.getY());
 
                     }
                 }
             }
-            System.out.println(instant + lognumber + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
+            System.out.println(firstInstant + lognumber + " " + idObjeto + " " + pos.getPosicionX() + " "
+                    + pos.getPosicionY());
             lognumber++;
         }
         System.out.println(pos);
@@ -240,7 +259,7 @@ public class MainController { // NO_UCD (test only)
 
     /**
      * Test.
-     *
+     * 
      * @return the string
      */
     @RequestMapping("/test")

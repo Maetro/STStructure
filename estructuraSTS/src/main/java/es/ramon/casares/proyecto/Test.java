@@ -108,7 +108,7 @@ public class Test {
 
         final K2Tree tree = K2TreeHelper.generarK2Tree(listaInfo, FunctionUtils.numeroCuadradosSegunLimite(35000));
 
-        System.out.println(K2TreeHelper.obtenerPosicionEnSnapshot(tree, 1110,
+        System.out.println(K2TreeHelper.obtenerPosicionEnSnapshot(tree, 745,
                 FunctionUtils.numeroCuadradosSegunLimite(35000)));
 
     }

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import es.ramon.casares.proyecto.modelo.estructura.log.Movimiento;
 import es.ramon.casares.proyecto.parametros.LimitesBean;
+import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 public class FunctionUtils {
 
@@ -30,7 +31,7 @@ public class FunctionUtils {
     // calculate haversine distance for linear distance
     /**
      * Haversine_km.
-     *
+     * 
      * @param lat1
      *            lat1
      * @param long1
@@ -56,7 +57,7 @@ public class FunctionUtils {
     /* La clave debe ser X:Y */
     /**
      * Unidimensionar.
-     *
+     * 
      * @param x
      *            x
      * @param y
@@ -131,7 +132,7 @@ public class FunctionUtils {
 
     /**
      * Sort by value.
-     *
+     * 
      * @param <K>
      *            tipo de clave
      * @param <V>
@@ -194,7 +195,7 @@ public class FunctionUtils {
 
     /**
      * Son diferencias dentro de limites.
-     *
+     * 
      * @param diferenciaInstantes
      *            the diferencia instantes
      * @param diferenciaX
@@ -203,31 +204,24 @@ public class FunctionUtils {
      *            the diferencia y
      * @return true, if successful
      */
-    public static boolean sonDiferenciasDentroDeLimites(final int diferenciaInstantes, final int diferenciaX,
+    public static boolean sonDiferenciasDentroDeLimites(final int diferenciaX,
             final int diferenciaY, final int limite) {
-        return (Math.abs(diferenciaX) <= (limite * diferenciaInstantes))
-                && (Math.abs(diferenciaY) <= (limite * diferenciaInstantes))
+        return (Math.abs(diferenciaX) <= (limite))
+                && (Math.abs(diferenciaY) <= (limite))
                 && ((Math.abs(diferenciaX) + Math.abs(diferenciaY)) <= ((limite * 2) - 1));
     }
 
-    /**
-     * Esta dentro de los movimientos posibles.
-     *
-     * @param diferenciaInstantes
-     *            the diferencia instantes
-     * @param diferenciaX
-     *            the diferencia x
-     * @param diferenciaY
-     *            the diferencia y
-     * @return true, if successful
-     */
-    public static boolean estaDentroDeLosMovimientosPosibles(final Integer diferenciaInstantes,
-            final Integer diferenciaX, final int diferenciaY, final int limite) {
-        boolean resultado = false;
-        if (sonDiferenciasDentroDeLimites(diferenciaInstantes, diferenciaX, diferenciaY, limite)) {
-            resultado = true;
+    public static List<Integer> obtenerMovimientoInterno(final Posicion pos, final List<Integer> movimientoDoble,
+            final int S) {
+        int posicion = 0;
+        for (final Integer entero : movimientoDoble) {
+            posicion++;
+            if (entero < S) {
+                break;
+            }
+
         }
-        return false;
+        return movimientoDoble.subList(posicion, movimientoDoble.size());
     }
 
 }

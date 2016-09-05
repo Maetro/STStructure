@@ -34,7 +34,7 @@ public class LogHelper {
 
     /**
      * Serializar k2 tree.
-     *
+     * 
      * @param log
      *            the log
      * @param S
@@ -73,12 +73,16 @@ public class LogHelper {
 
             final List<Integer> movimiento = codedNumer.getMovimiento();
             final int decodificado = encoder.decode(movimiento);
-            if ((decodificado == parametros.getPosicionReaparicionAbsoluta())
-                    || (decodificado == parametros.getPosicionReaparicionAbsoluta())) {
+            if (decodificado == parametros.getPosicionReaparicionAbsoluta()) {
                 // A id: 615 word: [1, 13562, 15786]
                 reserva = convertirMovimientoABytes(resultado, reserva, movimiento);
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(1).shortValue());
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(2).shortValue());
+            } else if (decodificado == parametros.getPosicionReaparicionFueraLimites()) {
+
+                reserva = convertirMovimientoABytes(resultado, reserva, movimiento.subList(0, movimiento.size() - 2));
+                reserva = convertirShortABytes(resultado, reserva, movimiento.get(movimiento.size() - 2).shortValue());
+                reserva = convertirShortABytes(resultado, reserva, movimiento.get(movimiento.size() - 1).shortValue());
             } else {
                 reserva = convertirMovimientoABytes(resultado, reserva, movimiento);
             }
@@ -97,7 +101,7 @@ public class LogHelper {
 
     /**
      * Convertir movimiento a bytes.
-     *
+     * 
      * @param resultado
      *            resultado
      * @param reserva
@@ -123,7 +127,7 @@ public class LogHelper {
 
     /**
      * Convertir movimiento a bytes.
-     *
+     * 
      * @param resultado
      *            resultado
      * @param reserva
@@ -140,13 +144,19 @@ public class LogHelper {
         } else {
             // Los primeros 4 bits del Short
             // A id: 615 word: [1, 13562, 15786]
-            final int cod = pos >> 12;
-            resultado.add(unirEnterosEnByte(reserva, cod));
-            int medio = pos << 20;
-            medio = medio >> 24;
+
+            final int reservaT = reserva << 16;
+            final int num = (reservaT & 0xFFFF0000) + (pos & 0x0000FFFF);
+            final Integer cod = num >> 12;
+
+            resultado.add(cod.byteValue());
+
+            int medio = num >> 4;
+            medio = medio & 0x00FF;
             anadirByteAListaBytes(resultado, new Byte((byte) medio));
             // En la reserva quedan los 4 ultimos
-            reserva = pos & 0x0f;
+
+            reserva = num & 0x000F;
 
         }
 
@@ -155,7 +165,7 @@ public class LogHelper {
 
     /**
      * Anadir entero a lista bytes.
-     *
+     * 
      * @param resultado
      *            the resultado
      * @param num
@@ -176,7 +186,7 @@ public class LogHelper {
 
     /**
      * Anadir short a lista bytes.
-     *
+     * 
      * @param resultado
      *            the resultado
      * @param num
@@ -191,7 +201,7 @@ public class LogHelper {
 
     /**
      * Unir enteros en byte.
-     *
+     * 
      * @param a
      *            the a
      * @param b
@@ -223,7 +233,7 @@ public class LogHelper {
 
             final Short idObjeto = estructura.readShort();
             objetos.add(idObjeto);
-            logger.debug(String.valueOf(idObjeto));
+            logger.info(String.valueOf(idObjeto));
 
         }
         final Map<Integer, MovimientoComprimido> objetoMovimientoMap = new HashMap<Integer, MovimientoComprimido>();
@@ -235,11 +245,11 @@ public class LogHelper {
             final Integer posWord = encoder.decode(word);
 
             if (posWord == parametros.getPosicionReaparicionRelativa()) {
-                logger.debug("idObjeto: " + objetos.get(i) + " R: ");
+                logger.info("idObjeto: " + objetos.get(i) + " R: ");
                 datos = obtenerPalabraMovimientoComprimido(estructura, encoder, word, datos);
             }
             if (posWord == parametros.getPosicionReaparicionFueraLimites()) {
-                logger.debug("idObjeto: " + objetos.get(i) + " R F: ");
+                logger.info("idObjeto: " + objetos.get(i) + " R F: ");
                 if (!datos.isUsado()) {
                     datos = obtenerPalabraDeMovimientoAbsolutoImpar(estructura, word, objetos,
                             datos, i);
@@ -258,8 +268,8 @@ public class LogHelper {
 
             }
             objetoMovimientoMap.put(objetos.get(i).intValue(), new MovimientoComprimido(word));
-            logger.debug("datos.getPos(): " + datos.getPos());
-            logger.debug("idObjeto: " + objetos.get(i) + " Word: " + word + " Decode: "
+            logger.info("datos.getPos(): " + datos.getPos());
+            logger.info("idObjeto: " + objetos.get(i) + " Word: " + word + " Decode: "
                     + encoder.decode(word));
 
         }
@@ -321,8 +331,7 @@ public class LogHelper {
         byte byteActual = estructura.readByte();
 
         datos.setPart2(obtenerChunk4bits(1, byteActual));
-
-        word.add(x);
+        word.add((int) (short) x);
         // Y
 
         puntero = estructura.getFilePointer();
@@ -342,7 +351,7 @@ public class LogHelper {
 
         datos.setPart2(obtenerChunk4bits(1, byteActual));
 
-        word.add(y);
+        word.add((int) (short) y);
         logger.debug("idObjeto: " + objetos.get(i) + " Reap. ABS   X: " + x + " y: "
                 + y);
 

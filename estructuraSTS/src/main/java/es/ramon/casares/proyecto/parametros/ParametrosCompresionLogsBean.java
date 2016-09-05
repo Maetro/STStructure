@@ -29,6 +29,9 @@ public class ParametrosCompresionLogsBean {
     /** The posicion reaparicion absoluta. */
     private int posicionReaparicionAbsoluta;
 
+    /** The posicion desaparicion. */
+    private int posicionDesaparicion;
+
     /**
      * Instantiates a new parametros compresion logs bean.
      */
@@ -37,7 +40,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the numero bloques.
-     *
+     * 
      * @return the numero bloques
      */
     public int getNumeroBloques() {
@@ -46,7 +49,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the numero bloques.
-     *
+     * 
      * @param numeroBloques
      *            the new numero bloques
      */
@@ -56,7 +59,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the parametro s.
-     *
+     * 
      * @return the parametro s
      */
     public int getParametroS() {
@@ -65,7 +68,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the parametro s.
-     *
+     * 
      * @param parametroS
      *            the new parametro s
      */
@@ -75,7 +78,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the parametro c.
-     *
+     * 
      * @return the parametro c
      */
     public int getParametroC() {
@@ -84,7 +87,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the parametro c.
-     *
+     * 
      * @param parametroC
      *            the new parametro c
      */
@@ -94,7 +97,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the posicion reaparicion relativa.
-     *
+     * 
      * @return the posicion reaparicion relativa
      */
     public int getPosicionReaparicionRelativa() {
@@ -103,7 +106,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the posicion reaparicion relativa.
-     *
+     * 
      * @param posicionReaparicionRelativa
      *            the new posicion reaparicion relativa
      */
@@ -113,7 +116,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the posicion reaparicion fuera limites.
-     *
+     * 
      * @return the posicion reaparicion fuera limites
      */
     public int getPosicionReaparicionFueraLimites() {
@@ -122,7 +125,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the posicion reaparicion fuera limites.
-     *
+     * 
      * @param posicionReaparicionFueraLimites
      *            the new posicion reaparicion fuera limites
      */
@@ -132,7 +135,7 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Gets the posicion reaparicion absoluta.
-     *
+     * 
      * @return the posicion reaparicion absoluta
      */
     public int getPosicionReaparicionAbsoluta() {
@@ -141,12 +144,31 @@ public class ParametrosCompresionLogsBean {
 
     /**
      * Sets the posicion reaparicion absoluta.
-     *
+     * 
      * @param posicionReaparicionAbsoluta
      *            the new posicion reaparicion absoluta
      */
     public void setPosicionReaparicionAbsoluta(final int posicionReaparicionAbsoluta) {
         this.posicionReaparicionAbsoluta = posicionReaparicionAbsoluta;
+    }
+
+    /**
+     * Obtiene posicion desaparcion.
+     * 
+     * @return posicion desaparcion
+     */
+    public int getPosicionDesaparicion() {
+        return this.posicionDesaparicion;
+    }
+
+    /**
+     * Establece posicion desaparcion.
+     * 
+     * @param posicionDesaparcion
+     *            nuevo posicion desaparcion
+     */
+    public void setPosicionDesaparcion(final int posicionDesaparicion) {
+        this.posicionDesaparicion = posicionDesaparicion;
     }
 
 }
