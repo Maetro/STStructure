@@ -20,20 +20,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.ramon.casares.proyecto.Test;
+import es.ramon.casares.proyecto.controlador.helpers.CompresorEstructuraHelper;
+import es.ramon.casares.proyecto.controlador.helpers.ConfiguracionHelper;
+import es.ramon.casares.proyecto.controlador.limpieza.SolucionadorColisiones.ImpossibleToSolveColisionException;
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
 import es.ramon.casares.proyecto.modelo.estructura.Estructura;
-import es.ramon.casares.proyecto.modelo.log.Log;
-import es.ramon.casares.proyecto.modelo.log.Movimiento;
-import es.ramon.casares.proyecto.modelo.log.MovimientoComprimido;
-import es.ramon.casares.proyecto.modelo.matrix.Posicion;
-import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
-import es.ramon.casares.proyecto.modelo.parametros.LimitesBean;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
-import es.ramon.casares.proyecto.util.CompresorEstructuraHelper;
-import es.ramon.casares.proyecto.util.ConfiguracionHelper;
-import es.ramon.casares.proyecto.util.ControladorHelper;
-import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
+import es.ramon.casares.proyecto.modelo.estructura.log.Log;
+import es.ramon.casares.proyecto.modelo.estructura.log.Movimiento;
+import es.ramon.casares.proyecto.modelo.estructura.log.MovimientoComprimido;
+import es.ramon.casares.proyecto.modelo.estructura.snapshot.k2tree.K2Tree;
+import es.ramon.casares.proyecto.modelo.util.K2TreeHelper;
+import es.ramon.casares.proyecto.parametros.ComprimirEstructuraParametersBean;
+import es.ramon.casares.proyecto.parametros.LimitesBean;
+import es.ramon.casares.proyecto.util.FunctionUtils;
+import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 /**
  * The Class MainController.
@@ -73,24 +73,23 @@ public class MainController { // NO_UCD (test only)
     public final String crearEstructura() throws ClassNotFoundException, FileNotFoundException, // NO_UCD (unused code)
             IOException, NumberFormatException, ImpossibleToSolveColisionException {
 
-        System.out.println(this.configuracion.getChunkSize() + "-" +
+        System.out.println(4 + "-" +
                 this.configuracion.getDistanciaEntreSnapshots() + "-" +
                 this.configuracion.getSegundosEntreInstantes() + "-" +
                 this.configuracion.getMetrosPorCelda() + "-" +
                 this.configuracion.getS() + "-" +
                 this.configuracion.getC());
 
-        this.preparadorDatos.primerAnalisis();
+        this.preparadorDatos.prepararDatosFichero();
 
         this.logger.info("Creando estructura");
 
         final int limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                 * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
-
         final File ficheroDataSet = new File("src/main/resources/datafileSinColisiones");
 
         this.logger.info("Analizando límites");
-        final LimitesBean limites = ControladorHelper.analizadorDeLimites(ficheroDataSet);
+        final LimitesBean limites = FunctionUtils.analizadorDeLimites(ficheroDataSet);
 
         this.logger.info("Creando Modelo estructura");
         final CreadorEstructura creador = new CreadorEstructura(limiteSuperior, limites.getLimiteCuadrado(),
@@ -117,7 +116,7 @@ public class MainController { // NO_UCD (test only)
 
         final File estructura = new File("src/main/resources/estructuracomprimida");
 
-        System.out.println(this.configuracion.getChunkSize() + "-" +
+        System.out.println(4 + "-" +
                 this.configuracion.getDistanciaEntreSnapshots() + "-" +
                 this.configuracion.getSegundosEntreInstantes() + "-" +
                 this.configuracion.getMetrosPorCelda() + "-" +
@@ -143,7 +142,7 @@ public class MainController { // NO_UCD (test only)
         final int limite = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                 * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
 
-        final int numeroEspiral = ControladorHelper.unidimensionar(limite,
+        final int numeroEspiral = FunctionUtils.unidimensionar(limite,
                 -limite);
 
         parametros.setSeparacionSnapshots(this.configuracion.getDistanciaEntreSnapshots());
@@ -152,7 +151,7 @@ public class MainController { // NO_UCD (test only)
         parametros.setParametroC(this.configuracion.getC());
         parametros.setParametroS(this.configuracion.getS());
         parametros.setSegundosPorInstante(this.configuracion.getSegundosEntreInstantes());
-        parametros.setCodigoReaparicionAbsoluta(numeroEspiral);
+        parametros.setLimiteMovimiento(limite);
     }
 
     /**
@@ -178,11 +177,10 @@ public class MainController { // NO_UCD (test only)
 
         final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
 
-        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
-                this.configuracion.getChunkSize(), 30);
+        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura, 30);
 
         K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0), 133,
-                ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
+                FunctionUtils.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
 
         return "DONE";
     }
@@ -190,38 +188,50 @@ public class MainController { // NO_UCD (test only)
     @RequestMapping("/resolver")
     public final String resolverConsultaTimeSlice(@RequestParam(value = "instant") final int instant,
             @RequestParam(value = "idObjeto") final int idObjeto) throws IOException {
-        // 2659 1110 11897 22982
 
         final StopWatch clock = new StopWatch();
         clock.start();
-        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida-4-30-30-30-8-8");
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
 
-        for (int i = 0; i < 1000; i++) {
+        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura, instant);
 
-            final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
-                    this.configuracion.getChunkSize(), instant);
+        final SCDenseCoder encoder = new SCDenseCoder(estructuraUtil.getCabecera().getParametroS(),
+                estructuraUtil.getCabecera().getParametroC());
 
-            final SCDenseCoder encoder = new SCDenseCoder(estructuraUtil.getCabecera().getParametroS(),
-                    estructuraUtil.getCabecera().getParametroC());
+        final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
+                idObjeto, FunctionUtils.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
 
-            final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
-                    idObjeto, ControladorHelper.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
+        System.out.println(instant + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
+        int lognumber = 1;
+        for (final Log log : estructuraUtil.getLogs().values()) {
 
-            for (final Log log : estructuraUtil.getLogs().values()) {
-
-                final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
+            final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
+            if (movimientoComprimido != null) {
+                final int movAntesEspiral = estructuraUtil.getMovimientosPorFrecuencia()
+                        .get(encoder.decode(movimientoComprimido.getMovimiento()));
                 if (movimientoComprimido != null) {
-                    final int movAntesEspiral = estructuraUtil.getMovimientosPorFrecuencia()
-                            .get(encoder.decode(movimientoComprimido.getMovimiento()));
-                    final Movimiento mov = ControladorHelper.obtenerMovimiento(movAntesEspiral);
-                    pos.setX(pos.getX() + mov.getX());
-                    pos.setY(pos.getY() + mov.getY());
+                    final Integer posicionNumero = movAntesEspiral;
+                    if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionAbsoluta())) {
+                        System.out.println("R A");
+                    } else if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionRelativa())) {
+                        System.out.println("R R");
+                    } else if (posicionNumero
+                            .equals(estructuraUtil.getParametros().getPosicionReaparicionFueraLimites())) {
+                        System.out.println("R F");
+                    } else {
+
+                        final Movimiento mov = FunctionUtils.obtenerMovimiento(movAntesEspiral);
+                        pos.setX(pos.getPosicionX() + mov.getX());
+                        pos.setY(pos.getPosicionY() + mov.getY());
+
+                    }
                 }
             }
-            if (i == 0) {
-                System.out.println(pos);
-            }
+            System.out.println(instant + lognumber + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
+            lognumber++;
         }
+        System.out.println(pos);
+
         clock.stop();
         System.out.println(clock.toString());
         return "DONE";
@@ -238,16 +248,10 @@ public class MainController { // NO_UCD (test only)
 
         final Test tests = new Test();
         final File frecuencias = new File("src/main/resources/frecuenciasTest");
-        try {
-            tests.probarGeneracionK2TreeyLogs(this.configuracion, frecuencias);
-        } catch (final NumberFormatException e) {
-            // TODO Auto-generated catch block
-            throw new InternalError(e.getMessage());
-        } catch (final IOException e) {
-            // TODO Auto-generated catch block
-            throw new InternalError(e.getMessage());
-        }
-        // tests.probarGeneracionK2TreeyBusqueda(this.configuracion);
+
+        // tests.probarGeneracionK2TreeyLogs(this.configuracion, frecuencias);
+
+        tests.probarGeneracionK2TreeyBusqueda(this.configuracion);
         // Test.probarLocalizacionObjetosEnK2Tree();
 
         return "DONE";

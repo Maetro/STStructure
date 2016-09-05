@@ -23,20 +23,21 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import es.ramon.casares.proyecto.controlador.helpers.CompresorEstructuraHelper;
+import es.ramon.casares.proyecto.controlador.helpers.ConfiguracionHelper;
+import es.ramon.casares.proyecto.controlador.limpieza.SolucionadorColisiones.ImpossibleToSolveColisionException;
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
-import es.ramon.casares.proyecto.modelo.log.Log;
-import es.ramon.casares.proyecto.modelo.log.Movimiento;
-import es.ramon.casares.proyecto.modelo.log.MovimientoComprimido;
-import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
-import es.ramon.casares.proyecto.modelo.objetos.PosicionKey;
-import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
-import es.ramon.casares.proyecto.util.ByteFileHelper;
-import es.ramon.casares.proyecto.util.CompresorEstructuraHelper;
-import es.ramon.casares.proyecto.util.ConfiguracionHelper;
-import es.ramon.casares.proyecto.util.ControladorHelper;
-import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
+import es.ramon.casares.proyecto.modelo.estructura.log.Log;
+import es.ramon.casares.proyecto.modelo.estructura.log.Movimiento;
+import es.ramon.casares.proyecto.modelo.estructura.log.MovimientoComprimido;
+import es.ramon.casares.proyecto.modelo.estructura.snapshot.Snapshot;
+import es.ramon.casares.proyecto.modelo.estructura.snapshot.k2tree.K2Tree;
+import es.ramon.casares.proyecto.modelo.util.K2TreeHelper;
+import es.ramon.casares.proyecto.parametros.ParametrosCompresionLogsBean;
+import es.ramon.casares.proyecto.util.ByteFileUtil;
+import es.ramon.casares.proyecto.util.FunctionUtils;
+import es.ramon.casares.proyecto.util.objetos.ObjetoMovil;
+import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 /**
  * The Class CreadorEstructura.
@@ -47,10 +48,7 @@ public class CreadorEstructura {
     private static final Logger logger = LoggerFactory.getLogger(CreadorEstructura.class);
 
     /** Las posiciones ocupadas en el momento actual del fichero. */
-    private final HashMap<PosicionKey, ObjetoMovil> posicionIds = new HashMap<PosicionKey, ObjetoMovil>();
-
-    /** The movimientos. */
-    private final Map<Movimiento, Integer> movimientos = new HashMap<Movimiento, Integer>();
+    private final HashMap<Posicion, ObjetoMovil> posicionIds = new HashMap<Posicion, ObjetoMovil>();
 
     /** The desaparecido relativo. */
     private final Set<Integer> desaparecidoRelativo = new HashSet<Integer>();
@@ -77,7 +75,10 @@ public class CreadorEstructura {
     private Movimiento desaparicion;
 
     /** The reaparicion. */
-    private Movimiento reaparicion;
+    private Movimiento reaparicionRelativa;
+
+    /** The reaparicion relativa fuera limites. */
+    private Movimiento reaparicionFueraLimites;
 
     /** The reaparicion absoluta. */
     private Movimiento reaparicionAbsoluta;
@@ -103,7 +104,14 @@ public class CreadorEstructura {
     /** The punteros. */
     private final List<Integer> punteros = new ArrayList<Integer>();
 
+    /** The parametros. */
+    private ParametrosCompresionLogsBean parametros;
+
+    /** The puntero. */
     private int puntero;
+
+    /** The instantes hasta desparicion. */
+    private int instantesHastaDesparicion;
 
     /**
      * Instantiates a new creador estructura.
@@ -143,13 +151,9 @@ public class CreadorEstructura {
             throws FileNotFoundException, IOException {
 
         this.desaparicion = new Movimiento(this.limiteLog, this.limiteLog);
-        this.reaparicion = new Movimiento(-this.limiteLog, -this.limiteLog);
+        this.reaparicionRelativa = new Movimiento(-this.limiteLog, -this.limiteLog);
         this.reaparicionAbsoluta = new Movimiento(this.limiteLog, -this.limiteLog);
-        for (int i = -this.limiteLog; i <= this.limiteLog; i++) {
-            for (int j = -this.limiteLog; j <= this.limiteLog; j++) {
-                this.movimientos.put(new Movimiento(i, j), 0);
-            }
-        }
+        this.reaparicionFueraLimites = new Movimiento(-this.limiteLog, this.limiteLog);
 
         this.datareader = new RandomAccessFile(ficheroFrecuencias, "r");
         String currentLine;
@@ -157,7 +161,21 @@ public class CreadorEstructura {
             this.movimientosPorFrecuencia.add(Integer.valueOf(currentLine));
         }
 
+        this.instantesHastaDesparicion = configuracion.getInstantesHastaDesaparicion();
+
         this.encoder = new SCDenseCoder(configuracion.getS(), configuracion.getC());
+
+        this.parametros = new ParametrosCompresionLogsBean();
+        this.parametros.setNumeroBloques(this.numeroBloques);
+        this.parametros.setParametroC(configuracion.getC());
+        this.parametros.setParametroS(configuracion.getS());
+
+        this.parametros.setPosicionReaparicionAbsoluta(
+                FunctionUtils.unidimensionar(this.reaparicionAbsoluta.getX(), this.reaparicionAbsoluta.getY()));
+        this.parametros.setPosicionReaparicionRelativa(
+                FunctionUtils.unidimensionar(this.reaparicionRelativa.getX(), this.reaparicionRelativa.getY()));
+        this.parametros.setPosicionReaparicionFueraLimites(FunctionUtils
+                .unidimensionar(this.reaparicionFueraLimites.getX(), this.reaparicionFueraLimites.getY()));
 
     }
 
@@ -181,7 +199,7 @@ public class CreadorEstructura {
         String currentLine;
 
         logger.info("Generando estructura");
-        final FileOutputStream tempFile = ByteFileHelper
+        final FileOutputStream tempFile = ByteFileUtil
                 .crearFicheroEscrituraSiNoExiste("src/main/resources/EstructuraTemporal");
         int lastInstant = 0;
         this.datareader = new RandomAccessFile(ficheroDataSet, "r");
@@ -196,14 +214,14 @@ public class CreadorEstructura {
 
                 lastInstant = analizarCambioInstante(configuracion, lastInstant, instant, tempFile);
 
-                final PosicionKey claveNum = new PosicionKey(x, y);
+                final Posicion claveNum = new Posicion(x, y);
                 final ObjetoMovil nuevaPos = new ObjetoMovil(id, instant, x, y);
 
                 if (this.mapaIds.containsKey(id)) {
                     // Si esta en el mapa hay que cambiar
                     // la posicion anotada
                     final ObjetoMovil viejaPos = this.mapaIds.get(id);
-                    final PosicionKey viejaClaveNum = new PosicionKey(viejaPos.getPosicionX(), viejaPos.getPosicionY());
+                    final Posicion viejaClaveNum = new Posicion(viejaPos.getPosicionX(), viejaPos.getPosicionY());
                     if (this.posicionIds.get(viejaClaveNum).getObjetoId() == id) {
                         this.posicionIds.remove(viejaClaveNum);
                         this.mapaIds.remove(viejaClaveNum);
@@ -297,8 +315,8 @@ public class CreadorEstructura {
         int lastInstant;
         lastInstant = instant;
 
-        final Set<PosicionKey> posiciones = new HashSet<PosicionKey>(this.posicionIds.keySet());
-        for (final PosicionKey posicion : posiciones) {
+        final Set<Posicion> posiciones = new HashSet<Posicion>(this.posicionIds.keySet());
+        for (final Posicion posicion : posiciones) {
             final ObjetoMovil objeto = this.posicionIds.get(posicion);
             if ((objeto.getInstante() + configuracion.getInstantesHastaDesaparicion()) <= instant) {
                 // El objeto ha desaparecido
@@ -307,10 +325,8 @@ public class CreadorEstructura {
                 this.posicionIds.remove(posicion);
                 this.mapaIds.remove(objeto.getObjetoId());
                 this.desaparecidoRelativo.add(objeto.getObjetoId());
-                Integer num = this.movimientos.get(this.desaparicion);
-                num++;
-                this.movimientos.put(this.desaparicion, num);
-                final int numeroEspiral = ControladorHelper.unidimensionar(this.desaparicion.getX(),
+
+                final int numeroEspiral = FunctionUtils.unidimensionar(this.desaparicion.getX(),
                         this.desaparicion.getY());
                 final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
                 final List<Integer> word = this.encoder.encode(posicionNumero);
@@ -368,7 +384,7 @@ public class CreadorEstructura {
             if ((instant - 1) != 0) {
                 this.punteros.add(this.puntero);
                 this.puntero = CompresorEstructuraHelper.comprimirBloqueSnapshotLog(this.snapshot, this.logs, tempFile,
-                        this.numeroBloques, configuracion.getS(), configuracion.getC(), this.puntero);
+                        this.parametros, this.puntero);
                 logger.info("Snapshot: " + this.numeroBloques);
                 this.numeroBloques++;
             }
@@ -379,8 +395,7 @@ public class CreadorEstructura {
             this.desaparecidoRelativo.clear();
             // Punto de generacion de Snapshot
             final K2Tree k2Tree = K2TreeHelper.generarK2Tree(this.posicionIds,
-                    ControladorHelper.numeroCuadradosSegunLimite(this.limiteSnapshot),
-                    configuracion.getMinimumSquare());
+                    FunctionUtils.numeroCuadradosSegunLimite(this.limiteSnapshot));
             final byte[] bytes = K2TreeHelper.serializarK2Tree(k2Tree);
             final int tamanoBytes = K2TreeHelper.obtenerTamanoK2Tree(k2Tree);
             System.out.println("NumBytes : " + tamanoBytes);
@@ -405,13 +420,11 @@ public class CreadorEstructura {
      *            the nueva pos
      */
     private void anotarReaparicionAbsoluta(final int id, final int x, final int y, final ObjetoMovil nuevaPos) {
-        final PosicionKey claveNum = new PosicionKey(x, y);
+        final Posicion claveNum = new Posicion(x, y);
         this.posicionIds.put(claveNum, nuevaPos);
         this.mapaIds.put(id, nuevaPos);
-        Integer num = this.movimientos.get(this.reaparicionAbsoluta);
-        num++;
-        this.movimientos.put(this.reaparicionAbsoluta, num);
-        final int numeroEspiral = ControladorHelper.unidimensionar(this.reaparicionAbsoluta.getX(),
+
+        final int numeroEspiral = FunctionUtils.unidimensionar(this.reaparicionAbsoluta.getX(),
                 this.reaparicionAbsoluta.getY());
         final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
         final List<Integer> word = this.encoder.encode(posicionNumero);
@@ -434,24 +447,39 @@ public class CreadorEstructura {
      *            the nueva pos
      */
     private void anotarReaparicionRelativa(final int id, final int x, final int y, final ObjetoMovil nuevaPos) {
-        final PosicionKey claveNum = new PosicionKey(x, y);
+        final Posicion claveNum = new Posicion(x, y);
         this.posicionIds.put(claveNum, nuevaPos);
         this.mapaIds.put(id, nuevaPos);
-        Integer num = this.movimientos.get(this.reaparicion);
-        num++;
-        this.movimientos.put(this.reaparicion, num);
-        int numeroEspiral = ControladorHelper.unidimensionar(this.reaparicion.getX(), this.reaparicion.getY());
-        int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
-        final List<Integer> word = this.encoder.encode(posicionNumero);
+
         final ObjetoMovil lastPosicion = this.ultimaPosicionDesaparecidos.get(id);
         final int diferenciaX = nuevaPos.getPosicionX() - lastPosicion.getPosicionX();
         final int diferenciaY = nuevaPos.getPosicionY() - lastPosicion.getPosicionY();
-        final Movimiento movimiento = new Movimiento(diferenciaX, diferenciaY);
-        numeroEspiral = ControladorHelper.unidimensionar(movimiento.getX(), movimiento.getY());
-        posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
-        word.addAll(this.encoder.encode(posicionNumero));
-        this.mapaDeLog.put(id, word);
+        if ((Math.abs(diferenciaX) > this.limiteLog) || (Math.abs(diferenciaY) > this.limiteLog)) {
+            // El movimiento relativo no cabe en la espeiral
 
+            final int numeroEspiral = FunctionUtils.unidimensionar(this.reaparicionFueraLimites.getX(),
+                    this.reaparicionFueraLimites.getY());
+            final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
+            final List<Integer> word = this.encoder.encode(posicionNumero);
+            word.add(diferenciaX);
+            word.add(diferenciaY);
+            this.mapaDeLog.put(id, word);
+        } else {
+
+            int numeroEspiral = FunctionUtils.unidimensionar(this.reaparicionRelativa.getX(),
+                    this.reaparicionRelativa.getY());
+            int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
+            final List<Integer> word = this.encoder.encode(posicionNumero);
+
+            // El movimiento relativo de la reaparicion cabe en la espiral
+            final Movimiento movimiento = new Movimiento(diferenciaX, diferenciaY);
+            numeroEspiral = FunctionUtils.unidimensionar(movimiento.getX(), movimiento.getY());
+            posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
+            word.addAll(this.encoder.encode(posicionNumero));
+            this.mapaDeLog.put(id, word);
+        }
+        this.ultimaPosicionDesaparecidos.remove(id);
+        this.desaparecidoRelativo.remove(id);
     }
 
     /**
@@ -466,7 +494,7 @@ public class CreadorEstructura {
      * @param viejaPos
      *            the vieja pos
      */
-    private void anotarMovimiento(final int id, final PosicionKey claveNum, final ObjetoMovil nuevaPos,
+    private void anotarMovimiento(final int id, final Posicion claveNum, final ObjetoMovil nuevaPos,
             final ObjetoMovil viejaPos) {
 
         // Fuera de los limites fisicos admitidos, no se registra el movimiento.
@@ -475,17 +503,27 @@ public class CreadorEstructura {
         if (viejaPos != null) {
             final int diferenciaX = nuevaPos.getPosicionX() - viejaPos.getPosicionX();
             final int diferenciaY = nuevaPos.getPosicionY() - viejaPos.getPosicionY();
-            if (movimientoDentroLimites(diferenciaX, diferenciaY)) {
+            if (FunctionUtils.sonDiferenciasDentroDeLimites(1, diferenciaX, diferenciaY, this.limiteLog)) {
                 movimiento = new Movimiento(diferenciaX, diferenciaY);
-                Integer num = this.movimientos.get(movimiento);
-                num++;
-                this.movimientos.put(movimiento, num);
-                final int numeroEspiral = ControladorHelper.unidimensionar(movimiento.getX(), movimiento.getY());
+
+                final int numeroEspiral = FunctionUtils.unidimensionar(movimiento.getX(), movimiento.getY());
                 final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
 
                 final List<Integer> word = this.encoder.encode(posicionNumero);
                 Collections.reverse(word);
 
+                this.mapaDeLog.put(id, word);
+            } else if (FunctionUtils.estaDentroDeLosMovimientosPosibles(
+                    (nuevaPos.getInstante() - viejaPos.getInstante()), diferenciaX, diferenciaY,
+                    this.limiteLog * this.instantesHastaDesparicion)) {
+                // Movimeinto válido fuera de espiral, lo anotamos como reaparicion fuera de limites para representarlo.
+
+                final int numeroEspiral = FunctionUtils.unidimensionar(this.reaparicionFueraLimites.getX(),
+                        this.reaparicionFueraLimites.getY());
+                final int posicionNumero = this.movimientosPorFrecuencia.indexOf(numeroEspiral);
+                final List<Integer> word = this.encoder.encode(posicionNumero);
+                word.add(diferenciaX);
+                word.add(diferenciaY);
                 this.mapaDeLog.put(id, word);
             }
 
@@ -495,17 +533,4 @@ public class CreadorEstructura {
 
     }
 
-    /**
-     * Movimiento dentro limites.
-     *
-     * @param diferenciaX
-     *            diferencia x
-     * @param diferenciaY
-     *            diferencia y
-     * @return true, si termina correctamente
-     */
-    private boolean movimientoDentroLimites(final int diferenciaX, final int diferenciaY) {
-        return (Math.abs(diferenciaX) <= this.limiteLog) && (Math.abs(diferenciaY) <= this.limiteLog)
-                && ((Math.abs(diferenciaX) + Math.abs(diferenciaY)) <= ((this.limiteLog * 2) - 1));
-    }
 }

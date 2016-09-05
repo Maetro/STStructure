@@ -1,3 +1,9 @@
+/**
+ * Test.java 03-sep-2016
+ *
+ * Copyright 2016 RAMON CASARES.
+ * @author Ramon.Casares.Porto@gmail.com
+ */
 package es.ramon.casares.proyecto;
 
 import java.io.File;
@@ -10,16 +16,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import es.ramon.casares.proyecto.controlador.helpers.ConfiguracionHelper;
 import es.ramon.casares.proyecto.encoder.SCDenseCoder;
-import es.ramon.casares.proyecto.modelo.log.Log;
-import es.ramon.casares.proyecto.modelo.log.Movimiento;
-import es.ramon.casares.proyecto.modelo.log.MovimientoComprimido;
-import es.ramon.casares.proyecto.modelo.matrix.Posicion;
-import es.ramon.casares.proyecto.modelo.objetos.ObjetoMovil;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2Tree;
-import es.ramon.casares.proyecto.modelo.snapshot.k2tree.K2TreeHelper;
-import es.ramon.casares.proyecto.util.ConfiguracionHelper;
-import es.ramon.casares.proyecto.util.ControladorHelper;
+import es.ramon.casares.proyecto.modelo.estructura.log.Log;
+import es.ramon.casares.proyecto.modelo.estructura.log.Movimiento;
+import es.ramon.casares.proyecto.modelo.estructura.log.MovimientoComprimido;
+import es.ramon.casares.proyecto.modelo.estructura.snapshot.k2tree.K2Tree;
+import es.ramon.casares.proyecto.modelo.util.K2TreeHelper;
+import es.ramon.casares.proyecto.util.FunctionUtils;
+import es.ramon.casares.proyecto.util.objetos.ObjetoMovil;
+import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 public class Test {
 
@@ -37,8 +43,7 @@ public class Test {
         listaInfo.add(new ObjetoMovil(9, 0, 9, 1));
         listaInfo.add(new ObjetoMovil(10, 0, 13, 6));
 
-        final K2Tree tree = K2TreeHelper.generarK2Tree(listaInfo, ControladorHelper.numeroCuadradosSegunLimite(14),
-                configuracion.getMinimumSquare());
+        final K2Tree tree = K2TreeHelper.generarK2Tree(listaInfo, FunctionUtils.numeroCuadradosSegunLimite(14));
 
         final RandomAccessFile datareader = new RandomAccessFile(ficheroFrecuencias, "r");
         String currentLine;
@@ -49,13 +54,13 @@ public class Test {
 
         final SCDenseCoder encoder = new SCDenseCoder(configuracion.getS(), configuracion.getC());
 
-        int numeroEspiral = ControladorHelper.unidimensionar(1, 1);
+        int numeroEspiral = FunctionUtils.unidimensionar(1, 1);
         int posicionNumero = movimientosPorFrecuencia.indexOf(numeroEspiral);
         final List<Integer> word1 = encoder.encode(posicionNumero);
         Collections.reverse(word1);
         final MovimientoComprimido mov1 = new MovimientoComprimido(word1);
 
-        numeroEspiral = ControladorHelper.unidimensionar(-7, -9);
+        numeroEspiral = FunctionUtils.unidimensionar(-7, -9);
         posicionNumero = movimientosPorFrecuencia.indexOf(numeroEspiral);
         final List<Integer> word2 = encoder.encode(posicionNumero);
         Collections.reverse(word2);
@@ -83,15 +88,15 @@ public class Test {
         final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot(tree, 5, 16);
         int movAntesEspiral = movimientosPorFrecuencia.get(encoder.decode(log1.getObjetoMovimientoMap().get(5)
                 .getMovimiento()));
-        Movimiento mov = ControladorHelper.obtenerMovimiento(movAntesEspiral);
-        pos.setX(pos.getX() + mov.getX());
-        pos.setY(pos.getY() + mov.getY());
+        Movimiento mov = FunctionUtils.obtenerMovimiento(movAntesEspiral);
+        pos.setX(pos.getPosicionX() + mov.getX());
+        pos.setY(pos.getPosicionY() + mov.getY());
 
         movAntesEspiral = movimientosPorFrecuencia.get(encoder.decode(log2.getObjetoMovimientoMap().get(5)
                 .getMovimiento()));
-        mov = ControladorHelper.obtenerMovimiento(movAntesEspiral);
-        pos.setX(pos.getX() + mov.getX());
-        pos.setY(pos.getY() + mov.getY());
+        mov = FunctionUtils.obtenerMovimiento(movAntesEspiral);
+        pos.setX(pos.getPosicionX() + mov.getX());
+        pos.setY(pos.getPosicionY() + mov.getY());
 
         System.out.println("Posicion final: " + pos);
 
@@ -99,18 +104,17 @@ public class Test {
 
     public void probarGeneracionK2TreeyBusqueda(final ConfiguracionHelper configuracion) {
         final List<ObjetoMovil> listaInfo = new ArrayList<ObjetoMovil>();
-        listaInfo.add(new ObjetoMovil(1110, 0, 11897, 22982));
+        listaInfo.add(new ObjetoMovil(745, 0, 13725, 15972));
 
-        final K2Tree tree = K2TreeHelper.generarK2Tree(listaInfo, ControladorHelper.numeroCuadradosSegunLimite(35000),
-                configuracion.getMinimumSquare());
+        final K2Tree tree = K2TreeHelper.generarK2Tree(listaInfo, FunctionUtils.numeroCuadradosSegunLimite(35000));
 
         System.out.println(K2TreeHelper.obtenerPosicionEnSnapshot(tree, 1110,
-                ControladorHelper.numeroCuadradosSegunLimite(35000)));
+                FunctionUtils.numeroCuadradosSegunLimite(35000)));
 
     }
 
     public static void probarLocalizacionObjetosEnK2Tree() {
-        ControladorHelper.numeroCuadradosSegunLimite(33271);
+        FunctionUtils.numeroCuadradosSegunLimite(33271);
         final ArrayList<Short> listaIds = new ArrayList<Short>();
         listaIds.add((short) 1);
         listaIds.add((short) 5);

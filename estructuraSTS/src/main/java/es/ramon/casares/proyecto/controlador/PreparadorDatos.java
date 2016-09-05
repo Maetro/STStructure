@@ -20,20 +20,18 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import es.ramon.casares.proyecto.util.ConfiguracionHelper;
-import es.ramon.casares.proyecto.util.ControladorHelper;
-import es.ramon.casares.proyecto.util.CreadorFicheroFrecuencias;
-import es.ramon.casares.proyecto.util.Normalizador;
-import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper;
-import es.ramon.casares.proyecto.util.SolucionadorColisionesHelper.ImpossibleToSolveColisionException;
-import es.ramon.casares.proyecto.util.SolucionadorRepetidosHelper;
-import es.ramon.casares.proyecto.util.parser.LineaEntradaParseada;
-import es.ramon.casares.proyecto.util.parser.ParseadorFicherosEntrada;
-import es.ramon.casares.proyecto.util.parser.impl.ParseadorFicherosEntradaImis;
+import es.ramon.casares.proyecto.controlador.helpers.ConfiguracionHelper;
+import es.ramon.casares.proyecto.controlador.limpieza.Normalizador;
+import es.ramon.casares.proyecto.controlador.limpieza.SolucionadorColisiones;
+import es.ramon.casares.proyecto.controlador.limpieza.SolucionadorColisiones.ImpossibleToSolveColisionException;
+import es.ramon.casares.proyecto.controlador.limpieza.SolucionadorRepeticiones;
+import es.ramon.casares.proyecto.controlador.limpieza.parser.LineaEntradaParseada;
+import es.ramon.casares.proyecto.controlador.limpieza.parser.ParseadorFicherosEntrada;
+import es.ramon.casares.proyecto.controlador.limpieza.parser.impl.ParseadorFicherosEntradaImis;
+import es.ramon.casares.proyecto.util.FunctionUtils;
 
 /**
  * La clase PreparadorDatos.
@@ -41,22 +39,15 @@ import es.ramon.casares.proyecto.util.parser.impl.ParseadorFicherosEntradaImis;
 @RestController
 public class PreparadorDatos {
 
-    /** The Constant PARAMETRO_CORRECCION_CURVATURA. */
-    private static final double PARAMETRO_CORRECCION_CURVATURA = 0.001;
-
     /** The logger. */
-    private static final Logger logger = LoggerFactory.getLogger(CreadorEstructura.class);
+    private static final Logger logger = LoggerFactory.getLogger(PreparadorDatos.class);
 
     /** The configuracion. */
     @Autowired
     private ConfiguracionHelper configuracion;
 
-    /** The resource loader. */
-    @Autowired
-    private ResourceLoader resourceLoader;
-
     /** The limite superior. */
-    private int limiteSuperior;
+    private int limiteMovimiento;
 
     /** The numero objetos. */
     private int numeroObjetos;
@@ -73,12 +64,12 @@ public class PreparadorDatos {
 
     /**
      * En el primer analisis se establecen los limites del mapa y el numero de objetos diferentes que existen.
-     * 
+     *
      * @throws ImpossibleToSolveColisionException
      * @throws NumberFormatException
      */
     @RequestMapping("/analizar")
-    public String primerAnalisis() throws NumberFormatException, ImpossibleToSolveColisionException {
+    public String prepararDatosFichero() throws NumberFormatException, ImpossibleToSolveColisionException {
 
         // Inicializamos el lector del fichero
         final InputStream is;
@@ -120,9 +111,9 @@ public class PreparadorDatos {
             logger.info("Analizando limites");
             analizadorDeLimites(menorLatitud, mayorLatitud, menorLongitud, mayorLongitud, idsObjetos, numeroLineas,
                     ultimoInstante);
-            this.limiteSuperior = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
+            this.limiteMovimiento = (int) Math.ceil(this.configuracion.getVelocidadMaxima()
                     * this.configuracion.getSegundosEntreInstantes() * (1D / this.configuracion.getMetrosPorCelda()));
-            logger.info("Velocidad máxima (cuadrados/instante): " + this.limiteSuperior);
+            logger.info("Velocidad máxima (cuadrados/instante): " + this.limiteMovimiento);
             br.close();
             is.close();
             logger.info("Crear fichero normalizado");
@@ -130,7 +121,7 @@ public class PreparadorDatos {
             final File ficheroNormalizado = new File("src/main/resources/ficheroNormalizado");
 
             // Si un objeto produce varias notificaciones entre instantes habra datos de mas
-            final SolucionadorRepetidosHelper solucionadorRepetidos = new SolucionadorRepetidosHelper();
+            final SolucionadorRepeticiones solucionadorRepetidos = new SolucionadorRepeticiones();
             logger.info("Eliminar datos repetidos");
             solucionadorRepetidos.resolverRepeticiones(ficheroNormalizado);
 
@@ -149,7 +140,7 @@ public class PreparadorDatos {
 
     /**
      * Tratar colisiones en data set.
-     * 
+     *
      * @param ficheroSinRepeticiones
      *            the fichero sin repeticiones
      * @return the resource
@@ -160,7 +151,7 @@ public class PreparadorDatos {
      */
     private File tratarColisionesEnDataSet(final File ficheroSinRepeticiones)
             throws IOException, ImpossibleToSolveColisionException {
-        final SolucionadorColisionesHelper solucionadorColisiones = new SolucionadorColisionesHelper();
+        final SolucionadorColisiones solucionadorColisiones = new SolucionadorColisiones();
 
         logger.info("Solucionar colisiones");
         int numColisiones = solucionadorColisiones.resolverColisiones(ficheroSinRepeticiones);
@@ -169,7 +160,7 @@ public class PreparadorDatos {
 
         final File ficheroSinColisiones = new File("src/main/resources/datafileSinColisiones");
 
-        final SolucionadorColisionesHelper revisorColisiones = new SolucionadorColisionesHelper();
+        final SolucionadorColisiones revisorColisiones = new SolucionadorColisiones();
         logger.info("Revisar colisiones");
         numColisiones = revisorColisiones.detectarColisiones(ficheroSinColisiones);
 
@@ -179,7 +170,7 @@ public class PreparadorDatos {
 
     private void crearFicheroFrecuencias(final File ficheroSinColisiones)
             throws IOException, ImpossibleToSolveColisionException {
-        final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteSuperior);
+        final CreadorFicheroFrecuencias frecuenciasCreador = new CreadorFicheroFrecuencias(this.limiteMovimiento);
         frecuenciasCreador.inicializar();
         frecuenciasCreador.crearFicheroFrecuencias(this.configuracion, ficheroSinColisiones);
         logger.info("Fichero frecuencias generado");
@@ -237,7 +228,7 @@ public class PreparadorDatos {
 
     /**
      * Analizador de limites.
-     * 
+     *
      * @param menorLatitud
      *            menor latitud
      * @param mayorLatitud
@@ -256,29 +247,29 @@ public class PreparadorDatos {
     private void analizadorDeLimites(final Double menorLatitud, final Double mayorLatitud, final Double menorLongitud,
             final Double mayorLongitud, final Set<Integer> idsObjetos, final long numeroLineas,
             final int ultimoInstante) {
-        double ladoSuperior = ControladorHelper.haversine_km(mayorLatitud, menorLongitud, mayorLatitud, mayorLongitud);
-        double ladoInferior = ControladorHelper.haversine_km(menorLatitud, menorLongitud, menorLatitud, mayorLongitud);
+        double ladoSuperior = FunctionUtils.haversine_km(mayorLatitud, menorLongitud, mayorLatitud, mayorLongitud);
+        double ladoInferior = FunctionUtils.haversine_km(menorLatitud, menorLongitud, menorLatitud, mayorLongitud);
         double menorLongitudCorregida = menorLongitud;
         double mayorLongitudCorregida = mayorLongitud;
         if (ladoSuperior >= ladoInferior) {
             // Hemisferio Sur
             while (ladoSuperior >= ladoInferior) {
-                menorLongitudCorregida -= PARAMETRO_CORRECCION_CURVATURA;
-                mayorLongitudCorregida += PARAMETRO_CORRECCION_CURVATURA;
-                ladoInferior = ControladorHelper.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
+                menorLongitudCorregida -= this.configuracion.getParametroCorrecionCurvatura();
+                mayorLongitudCorregida += this.configuracion.getParametroCorrecionCurvatura();
+                ladoInferior = FunctionUtils.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
                         mayorLongitudCorregida);
             }
         } else {
             // Hemisferio Norte
             while (ladoInferior >= ladoSuperior) {
-                menorLongitudCorregida -= PARAMETRO_CORRECCION_CURVATURA;
-                mayorLongitudCorregida += PARAMETRO_CORRECCION_CURVATURA;
-                ladoSuperior = ControladorHelper.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
+                menorLongitudCorregida -= this.configuracion.getParametroCorrecionCurvatura();
+                mayorLongitudCorregida += this.configuracion.getParametroCorrecionCurvatura();
+                ladoSuperior = FunctionUtils.haversine_km(menorLatitud, menorLongitudCorregida, menorLatitud,
                         mayorLongitudCorregida);
             }
         }
 
-        final double ladoLateral = ControladorHelper.haversine_km(menorLatitud, mayorLongitud, mayorLatitud,
+        final double ladoLateral = FunctionUtils.haversine_km(menorLatitud, mayorLongitud, mayorLatitud,
                 mayorLongitud);
         final int numeroCeldasLado = (int) Math
                 .ceil((Math.max(ladoLateral, ladoSuperior) * 1000) / this.configuracion.getMetrosPorCelda());
@@ -301,7 +292,7 @@ public class PreparadorDatos {
 
     /**
      * Escribir informacion obtenida.
-     * 
+     *
      * @param menorLatitud
      *            the menor latitud
      * @param mayorLatitud
@@ -349,7 +340,7 @@ public class PreparadorDatos {
         logger.info("Distancias (Lado Izq):      " + ladoLateral);
         logger.info("Distancias (Lado Dcho):     " + ladoLateral);
         logger.info("Distancias (Hipotenusa):    "
-                + ControladorHelper.haversine_km(menorLatitud, menorLongitud, mayorLatitud, mayorLongitud));
+                + FunctionUtils.haversine_km(menorLatitud, menorLongitud, mayorLatitud, mayorLongitud));
         logger.info("Numero cuadrados lado:      " + numeroCeldasLado);
         logger.info("Numero cuadrados totales:   " + (numeroCeldasLado * numeroCeldasLado));
         logger.info("***********************************");

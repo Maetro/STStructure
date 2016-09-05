@@ -1,4 +1,4 @@
-minimumsquare: 4
+parametroCorrecionCurvatura: 0.001
 distanciaEntreSnapshots: 30
 segundosEntreInstantes: 30
 instantesHastaDesaparicion: 7
@@ -7,7 +7,6 @@ metrosPorCelda: 30
 #En metros segundo
 velocidadMaxima: 33.33 
 
-limites: 16000
 minimumSquare: 4
 
 # SC Dense Codes
@@ -18,5 +17,5 @@ chunkSize: 4
 
 logging:
   level:
-    ROOT: ERROR
+    ROOT: INFO
 

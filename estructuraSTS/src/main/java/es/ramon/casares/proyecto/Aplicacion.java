@@ -12,15 +12,13 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
-import es.ramon.casares.proyecto.controlador.MainController;
-
 /**
  * The Class Aplicacion.
  */
 @SpringBootApplication
 public class Aplicacion {
     /** The logger. */
-    private static final Logger logger = LoggerFactory.getLogger(MainController.class);
+    private static final Logger logger = LoggerFactory.getLogger(Aplicacion.class);
 
     public static void main(final String[] args) {
         logger.info("Arrancando aplicacion");

@@ -10,9 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import es.ramon.casares.proyecto.modelo.log.Log;
-import es.ramon.casares.proyecto.modelo.parametros.ComprimirEstructuraParametersBean;
-import es.ramon.casares.proyecto.modelo.snapshot.Snapshot;
+import es.ramon.casares.proyecto.modelo.estructura.log.Log;
+import es.ramon.casares.proyecto.modelo.estructura.snapshot.Snapshot;
+import es.ramon.casares.proyecto.parametros.ComprimirEstructuraParametersBean;
+import es.ramon.casares.proyecto.parametros.ParametrosCompresionLogsBean;
 
 /**
  * The Class Estructura.
@@ -33,6 +34,9 @@ public class Estructura {
     /** The movimientos por frecuencia. */
     private List<Integer> movimientosPorFrecuencia;
 
+    /** The parametros. */
+    private ParametrosCompresionLogsBean parametros;
+
     /**
      * Instantiates a new estructura.
      *
@@ -49,13 +53,14 @@ public class Estructura {
      */
     public Estructura(final Map<Integer, Snapshot> snapshotsP, final Map<Integer, Log> logsP,
             final Integer numeroCuadradosP, final ComprimirEstructuraParametersBean cabeceraP,
-            final List<Integer> movimientosPorFrecuenciaP) {
+            final List<Integer> movimientosPorFrecuenciaP, final ParametrosCompresionLogsBean parametrosP) {
         super();
         this.snapshots = snapshotsP;
         this.logs = logsP;
         this.numeroCuadrados = numeroCuadradosP;
         this.cabecera = cabeceraP;
         this.movimientosPorFrecuencia = movimientosPorFrecuenciaP;
+        this.parametros = parametrosP;
 
     }
 
@@ -142,6 +147,25 @@ public class Estructura {
      */
     public void setMovimientosPorFrecuencia(final List<Integer> movimientosPorFrecuencia) {
         this.movimientosPorFrecuencia = movimientosPorFrecuencia;
+    }
+
+    /**
+     * Gets the parametros.
+     *
+     * @return the parametros
+     */
+    public ParametrosCompresionLogsBean getParametros() {
+        return this.parametros;
+    }
+
+    /**
+     * Sets the parametros.
+     *
+     * @param parametros
+     *            the new parametros
+     */
+    public void setParametros(final ParametrosCompresionLogsBean parametros) {
+        this.parametros = parametros;
     }
 
 }
