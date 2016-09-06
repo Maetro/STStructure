@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import es.ramon.casares.proyecto.modelo.estructura.log.Movimiento;
 import es.ramon.casares.proyecto.parametros.LimitesBean;
-import es.ramon.casares.proyecto.util.objetos.Posicion;
 
 public class FunctionUtils {
 
@@ -211,7 +210,7 @@ public class FunctionUtils {
                 && ((Math.abs(diferenciaX) + Math.abs(diferenciaY)) <= ((limite * 2) - 1));
     }
 
-    public static List<Integer> obtenerMovimientoInterno(final Posicion pos, final List<Integer> movimientoDoble,
+    public static List<Integer> obtenerMovimientoInterno(final List<Integer> movimientoDoble,
             final int S) {
         int posicion = 0;
         for (final Integer entero : movimientoDoble) {

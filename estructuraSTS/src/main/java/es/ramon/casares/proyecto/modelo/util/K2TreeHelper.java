@@ -36,6 +36,7 @@ import es.ramon.casares.proyecto.parametros.RegionAnalizarBean;
 import es.ramon.casares.proyecto.util.ByteFileUtil;
 import es.ramon.casares.proyecto.util.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.util.objetos.Posicion;
+import es.ramon.casares.proyecto.util.objetos.Rectangulo;
 
 /**
  * The Class K2TreeHelper.
@@ -689,6 +690,24 @@ public class K2TreeHelper {
         }
         // TODO Auto-generated method stub
         return pos;
+    }
+
+    /**
+     * Obtener posiciones en rango snapshot.
+     * 
+     * @param k2Tree
+     *            k2 tree
+     * @param rango
+     *            rango
+     * @param rectangulo
+     * @param numeroCuadradosSegunLimite
+     *            numero cuadrados segun limite
+     * @return the posicion
+     */
+    public static List<ObjetoMovil> obtenerPosicionesEnRangoSnapshot(final K2Tree k2Tree, final int rango,
+            final Rectangulo rectangulo, final Integer numeroCuadradosSegunLimite) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

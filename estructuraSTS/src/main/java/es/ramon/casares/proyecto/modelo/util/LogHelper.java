@@ -74,12 +74,10 @@ public class LogHelper {
             final List<Integer> movimiento = codedNumer.getMovimiento();
             final int decodificado = encoder.decode(movimiento);
             if (decodificado == parametros.getPosicionReaparicionAbsoluta()) {
-                // A id: 615 word: [1, 13562, 15786]
                 reserva = convertirMovimientoABytes(resultado, reserva, movimiento);
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(1).shortValue());
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(2).shortValue());
             } else if (decodificado == parametros.getPosicionReaparicionFueraLimites()) {
-
                 reserva = convertirMovimientoABytes(resultado, reserva, movimiento.subList(0, movimiento.size() - 2));
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(movimiento.size() - 2).shortValue());
                 reserva = convertirShortABytes(resultado, reserva, movimiento.get(movimiento.size() - 1).shortValue());

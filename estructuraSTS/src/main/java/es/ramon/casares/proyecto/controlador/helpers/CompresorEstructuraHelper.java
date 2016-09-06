@@ -269,4 +269,10 @@ public final class CompresorEstructuraHelper {
 
     }
 
+    public static Estructura descomprimirEstructura(final File ficheroEstructura, final int instantInicial,
+            final int instantFinal) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

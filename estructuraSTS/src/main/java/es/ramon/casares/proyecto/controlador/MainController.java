@@ -9,6 +9,8 @@ package es.ramon.casares.proyecto.controlador;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang.time.StopWatch;
@@ -33,7 +35,9 @@ import es.ramon.casares.proyecto.modelo.util.K2TreeHelper;
 import es.ramon.casares.proyecto.parametros.ComprimirEstructuraParametersBean;
 import es.ramon.casares.proyecto.parametros.LimitesBean;
 import es.ramon.casares.proyecto.util.FunctionUtils;
+import es.ramon.casares.proyecto.util.objetos.ObjetoMovil;
 import es.ramon.casares.proyecto.util.objetos.Posicion;
+import es.ramon.casares.proyecto.util.objetos.Rectangulo;
 
 /**
  * The Class MainController.
@@ -186,7 +190,7 @@ public class MainController { // NO_UCD (test only)
     }
 
     @RequestMapping("/resolver")
-    public final String resolverConsultaTimeSlice(@RequestParam(value = "instant") final int instant,
+    public final String resolverConsultaObjetoInstante(@RequestParam(value = "instant") final int instant,
             @RequestParam(value = "idObjeto") final int idObjeto) throws IOException {
 
         final StopWatch clock = new StopWatch();
@@ -200,9 +204,7 @@ public class MainController { // NO_UCD (test only)
 
         final Posicion pos = K2TreeHelper.obtenerPosicionEnSnapshot((K2Tree) estructuraUtil.getSnapshots().get(0),
                 idObjeto, FunctionUtils.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
-        final int firstInstant = (instant / 30) * 30;
-        System.out.println(firstInstant + " " + idObjeto + " " + pos.getPosicionX() + " " + pos.getPosicionY());
-        int lognumber = 1;
+
         for (final Log log : estructuraUtil.getLogs().values()) {
 
             final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
@@ -216,9 +218,9 @@ public class MainController { // NO_UCD (test only)
                         pos.setY(pos.getPosicionY() + movimientoComprimido.getMovimiento().get(
                                 movimientoComprimido.getMovimiento().size() - 1));
                     } else if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionRelativa())) {
-                        System.out.println("R R");
+
                         final List<Integer> movimientoDoble = movimientoComprimido.getMovimiento();
-                        final List<Integer> mov = FunctionUtils.obtenerMovimientoInterno(pos, movimientoDoble,
+                        final List<Integer> mov = FunctionUtils.obtenerMovimientoInterno(movimientoDoble,
                                 estructuraUtil.getCabecera().getParametroS());
                         final Movimiento movimientoReap = FunctionUtils.obtenerMovimiento(estructuraUtil
                                 .getMovimientosPorFrecuencia()
@@ -233,7 +235,7 @@ public class MainController { // NO_UCD (test only)
                                 movimientoComprimido.getMovimiento().size() - 1));
                     } else if (posicionNumero
                             .equals(estructuraUtil.getParametros().getPosicionDesaparicion())) {
-                        System.out.println("DESAPARECIDO");
+                        // Desaparecido
                     } else {
 
                         final Movimiento mov = FunctionUtils.obtenerMovimiento(estructuraUtil
@@ -245,16 +247,216 @@ public class MainController { // NO_UCD (test only)
                     }
                 }
             }
-            System.out.println(firstInstant + lognumber + " " + idObjeto + " " + pos.getPosicionX() + " "
-                    + pos.getPosicionY());
-            lognumber++;
         }
-        System.out.println(pos);
 
         clock.stop();
         System.out.println(clock.toString());
         return "DONE";
 
+    }
+
+    @RequestMapping("/timeSlice")
+    public final List<ObjetoMovil> resolverConsultatimeSlice(@RequestParam(value = "instant") final int instant,
+            @RequestParam(value = "x1") final int x1, @RequestParam(value = "x2") final int x2,
+            @RequestParam(value = "y1") final int y1, @RequestParam(value = "y2") final int y2) throws IOException {
+
+        final StopWatch clock = new StopWatch();
+        clock.start();
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
+
+        final Rectangulo rectangulo = new Rectangulo(x1, y1, x2, y2);
+
+        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura, instant);
+
+        final SCDenseCoder encoder = new SCDenseCoder(estructuraUtil.getCabecera().getParametroS(),
+                estructuraUtil.getCabecera().getParametroC());
+
+        int rango = instant % estructuraUtil.getCabecera().getSeparacionSnapshots();
+
+        // Devuelve los objetos candidatos a cumplir con la query
+        List<ObjetoMovil> objetosCandidatos = K2TreeHelper.obtenerPosicionesEnRangoSnapshot(
+                (K2Tree) estructuraUtil.getSnapshots().get(0), rango, rectangulo,
+                FunctionUtils.numeroCuadradosSegunLimite(estructuraUtil.getNumeroCuadrados()));
+        // Aplicamos los cambios de cada log y comprobamos si siguen siendo candidatos.
+        final List<ObjetoMovil> nuevaListaCandidatos = new ArrayList<ObjetoMovil>();
+        for (final Log log : estructuraUtil.getLogs().values()) {
+            for (ObjetoMovil objetoMovil : objetosCandidatos) {
+                final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(
+                        objetoMovil.getObjetoId());
+                if (movimientoComprimido != null) {
+                    final int posicion = encoder.decode(movimientoComprimido.getMovimiento());
+                    if (movimientoComprimido != null) {
+                        objetoMovil = modificarPosicionObjeto(estructuraUtil, encoder, objetoMovil,
+                                movimientoComprimido,
+                                posicion);
+                    }
+                }
+                if (entraDentroDeRango(rango, rectangulo, objetoMovil)) {
+                    nuevaListaCandidatos.add(objetoMovil);
+                }
+            }
+            objetosCandidatos = new ArrayList(nuevaListaCandidatos);
+            nuevaListaCandidatos.clear();
+            rango--;
+        }
+
+        return objetosCandidatos;
+
+    }
+
+    @RequestMapping("/timeInterval")
+    public final List<Integer> resolverConsultaTimeInterval(
+            @RequestParam(value = "instantInicial") final int instantInicial,
+            @RequestParam(value = "instantFinal") final int instantFinal, @RequestParam(value = "x1") final int x1,
+            @RequestParam(value = "x2") final int x2, @RequestParam(value = "y1") final int y1,
+            @RequestParam(value = "y2") final int y2) throws IOException {
+
+        final HashSet<Integer> idsObjetosRespuesta = new HashSet<Integer>();
+        for (int i = instantInicial; i <= instantFinal; i++) {
+            final List<ObjetoMovil> objetosInstante = resolverConsultatimeSliceConExcluidos(i, x1, x2, y1, y2,
+                    idsObjetosRespuesta);
+            for (final ObjetoMovil objetoRespuesta : objetosInstante) {
+                idsObjetosRespuesta.add(objetoRespuesta.getObjetoId());
+            }
+        }
+        final ArrayList<Integer> respuesta = new ArrayList<Integer>();
+        respuesta.addAll(idsObjetosRespuesta);
+        return respuesta;
+    }
+
+    @RequestMapping("/trayectoria")
+    public final List<Movimiento> resolverTrayectoria(
+            @RequestParam(value = "instantInicial") final int instantInicial,
+            @RequestParam(value = "instantFinal") final int instantFinal,
+            @RequestParam(value = "idObjeto") final int idObjeto) throws IOException {
+        final StopWatch clock = new StopWatch();
+        clock.start();
+        final File ficheroEstructura = new File("src/main/resources/estructuracomprimida");
+        final List<Movimiento> movimientos = new ArrayList<Movimiento>();
+
+        final Estructura estructuraUtil = CompresorEstructuraHelper.descomprimirEstructura(ficheroEstructura,
+                instantInicial, instantFinal);
+
+        final SCDenseCoder encoder = new SCDenseCoder(estructuraUtil.getCabecera().getParametroS(),
+                estructuraUtil.getCabecera().getParametroC());
+
+        for (final Log log : estructuraUtil.getLogs().values()) {
+            Movimiento mov = null;
+            final MovimientoComprimido movimientoComprimido = log.getObjetoMovimientoMap().get(idObjeto);
+            if (movimientoComprimido != null) {
+                final int posicion = encoder.decode(movimientoComprimido.getMovimiento());
+                if (movimientoComprimido != null) {
+                    final Integer posicionNumero = posicion;
+                    if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionAbsoluta())) {
+
+                        final int x = movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 2);
+                        final int y = movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 1);
+                        mov = new Movimiento(x, y);
+                        movimientos.add(mov);
+
+                    } else if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionRelativa())) {
+
+                        final List<Integer> movimientoDoble = movimientoComprimido.getMovimiento();
+                        final List<Integer> movCompr = FunctionUtils.obtenerMovimientoInterno(movimientoDoble,
+                                estructuraUtil.getCabecera().getParametroS());
+                        final Movimiento movimientoReap = FunctionUtils.obtenerMovimiento(estructuraUtil
+                                .getMovimientosPorFrecuencia()
+                                .get(encoder.decode(movCompr)));
+
+                        movimientos.add(movimientoReap);
+                    } else if (posicionNumero
+                            .equals(estructuraUtil.getParametros().getPosicionReaparicionFueraLimites())) {
+                        final int x = movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 2);
+                        final int y = movimientoComprimido.getMovimiento().get(
+                                movimientoComprimido.getMovimiento().size() - 1);
+                        mov = new Movimiento(x, y);
+                        movimientos.add(mov);
+                    } else if (posicionNumero
+                            .equals(estructuraUtil.getParametros().getPosicionDesaparicion())) {
+                        // Desaparecido
+                        movimientos.add(new Movimiento(0, 0));
+                    } else {
+
+                        mov = FunctionUtils.obtenerMovimiento(estructuraUtil
+                                .getMovimientosPorFrecuencia()
+                                .get(posicion));
+                        movimientos.add(mov);
+
+                    }
+                }
+            }
+        }
+
+        clock.stop();
+
+        return movimientos;
+    }
+
+    private List<ObjetoMovil> resolverConsultatimeSliceConExcluidos(final int i, final int x1, final int x2,
+            final int y1, final int y2,
+            final HashSet<Integer> idsObjetosRespuesta) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private boolean entraDentroDeRango(final int rango, final Rectangulo rectangulo, final ObjetoMovil objetoMovil) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    /**
+     * Modificar posicion objeto.
+     * 
+     * @param estructuraUtil
+     *            estructura util
+     * @param encoder
+     *            encoder
+     * @param objetoMovil
+     *            objeto movil
+     * @param movimientoComprimido
+     *            movimiento comprimido
+     * @param posicion
+     *            posicion
+     */
+    private ObjetoMovil modificarPosicionObjeto(final Estructura estructuraUtil, final SCDenseCoder encoder,
+            final ObjetoMovil objetoMovil, final MovimientoComprimido movimientoComprimido, final Integer posicionNumero) {
+        if (posicionNumero.equals(estructuraUtil.getParametros().getPosicionReaparicionAbsoluta())) {
+            objetoMovil.setX(objetoMovil.getPosicionX() + movimientoComprimido.getMovimiento().get(
+                    movimientoComprimido.getMovimiento().size() - 2));
+            objetoMovil.setY(objetoMovil.getPosicionY() + movimientoComprimido.getMovimiento().get(
+                    movimientoComprimido.getMovimiento().size() - 1));
+        } else if (posicionNumero.equals(estructuraUtil.getParametros()
+                .getPosicionReaparicionRelativa())) {
+            final List<Integer> movimientoDoble = movimientoComprimido.getMovimiento();
+            final List<Integer> mov = FunctionUtils.obtenerMovimientoInterno(movimientoDoble,
+                    estructuraUtil.getCabecera().getParametroS());
+            final Movimiento movimientoReap = FunctionUtils.obtenerMovimiento(estructuraUtil
+                    .getMovimientosPorFrecuencia()
+                    .get(encoder.decode(mov)));
+            objetoMovil.setX(objetoMovil.getPosicionX() + movimientoReap.getX());
+            objetoMovil.setY(objetoMovil.getPosicionY() + movimientoReap.getY());
+        } else if (posicionNumero
+                .equals(estructuraUtil.getParametros().getPosicionReaparicionFueraLimites())) {
+            objetoMovil.setX(objetoMovil.getPosicionX() + movimientoComprimido.getMovimiento().get(
+                    movimientoComprimido.getMovimiento().size() - 2));
+            objetoMovil.setY(objetoMovil.getPosicionY() + movimientoComprimido.getMovimiento().get(
+                    movimientoComprimido.getMovimiento().size() - 1));
+        } else if (posicionNumero
+                .equals(estructuraUtil.getParametros().getPosicionDesaparicion())) {
+            // "DESAPARECIDO"
+        } else {
+
+            final Movimiento mov = FunctionUtils.obtenerMovimiento(estructuraUtil
+                    .getMovimientosPorFrecuencia()
+                    .get(posicionNumero));
+            objetoMovil.setX(objetoMovil.getPosicionX() + mov.getX());
+            objetoMovil.setY(objetoMovil.getPosicionY() + mov.getY());
+
+        }
+        return objetoMovil;
     }
 
     /**
